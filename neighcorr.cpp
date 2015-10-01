@@ -3,8 +3,7 @@ using namespace std;
 
 
 int main(int argc, char const *argv[])
-{   
-
+{
     if(argc<5) {cerr<<"Mandatory arguments: path to files, first frame, last frame, output name"<<endl; exit(0);}
     int first=atoi(argv[2]);
     int last=atoi(argv[3]);
@@ -20,7 +19,8 @@ int main(int argc, char const *argv[])
 
     bool sorting=false;
     Trajectory.compute_neighbour_correlation(sorting);
-    Trajectory.save_neighbour_correlation(output_file;
+    Trajectory.save_neighbour_correlation(output_file);
 
     return 0;
 }
+

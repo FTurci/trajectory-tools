@@ -54,6 +54,6 @@ void trajectory::save_neighbour_correlation(std::string filename){
     fout.close();
 }
 
- int trajectory::length(){
+int trajectory::length(){
     return this->sequence.size();
 }
