@@ -1,4 +1,5 @@
 #include "trajectory.h"
+#include "utilities.h"
 using namespace std;
 
 
@@ -12,8 +13,8 @@ int main(int argc, char const *argv[])
         exit(0);
     }
     
-    int first = StringToNum<int> (argv[2]);
-    int last = StringToNum<int>(argv[3]);
+    int first = stoi(argv[2]);
+    int last = stoi(argv[3]);
     string output_file = argv[4];
     
     trajectory Trajectory;
