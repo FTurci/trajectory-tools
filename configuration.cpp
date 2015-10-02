@@ -131,7 +131,7 @@ void configuration::radial_distr(int nbins,double biwidth){
         {
             //normalise
             double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
-            double nid=(4./3.)*M_PI*vol*rho; //3D
+            double nid=(4./3.)*M_PI*vol*this->density; //3D
             g[i]/=nid*this->Npart; //scale         
         }
 
