@@ -3,7 +3,6 @@
 
 #include "configuration.h"
 
-
 class Trajectory
 {
 public:

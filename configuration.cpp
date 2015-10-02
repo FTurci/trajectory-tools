@@ -104,7 +104,7 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
 
 
 void configuration::radial_distr(int nbins,double biwidth){
-    double rmax=nbins*binwidth;
+/*    double rmax=nbins*binwidth;
     int bin;
     this->g.resize(nbins);
     // dx,dy,dz...
@@ -133,5 +133,6 @@ void configuration::radial_distr(int nbins,double biwidth){
             double nid=(4./3.)*M_PI*vol*this->density; //3D
             g[i]/=nid*this->Npart; //scale         
         }
-
+*/
 }
+
