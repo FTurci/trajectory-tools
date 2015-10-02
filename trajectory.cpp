@@ -10,12 +10,12 @@ trajectory::trajectory()
 
 }
 
-void trajectory::read_neighbour_sequence(vector<string> path_list)
+void trajectory::read_sequence_neighbours(vector<string> path_list)
 {
     for (int i = 0; i < path_list.size(); i++)
     {
         configuration C;
-        C.read_neighbours(str);
+        C.read_neighbours(path_list[i]);
         this->sequence.push_back(C);
     }
     this->neigh_corr.resize(sequence.size());

@@ -57,11 +57,11 @@ int main(int argc, char const *argv[])
         cerr << EXE_NAME << ": error: missing output path with -o (--output) option." << endl;
         return EXIT_FAILURE;
     }
-    const string out_path( options[OUTPUT].arg );
+    const string output_path( options[OUTPUT].arg );
 
     // Make sure we've been given a trajectory.
-    const int max_in_paths = parse.nonOptionsCount();
-    if (!max_in_paths)
+    const int max_sequence_size = parse.nonOptionsCount();
+    if (!max_sequence_size)
     {
         cerr << EXE_NAME << ": error: no input paths specified." << endl;
         return EXIT_FAILURE;
@@ -69,17 +69,17 @@ int main(int argc, char const *argv[])
     
     // By default use the whole trajectory, but this can be overridden on the command line.
     int first = 1;
-    int last = max_in_paths;
+    int last = max_sequence_size;
     if (options[FIRST] && options[FIRST].arg) first = stoi(options[FIRST].arg);
     if (options[LAST] && options[LAST].arg) last = stoi(options[LAST].arg);
-    if (first < 1 || first > max_in_paths)
+    if (first < 1 || first > max_sequence_size)
     {
         cerr << EXE_NAME << ": error: given out-of-bounds initial index with -f (--first) option: f=" << first << "." << endl;
         return EXIT_FAILURE;
     }
-    if (last < 1 || last > max_in_paths)
+    if (last < 1 || last > max_sequence_size)
     {
-        cerr << EXE_NAME << ": error: given out-of-bounds final index with -l (--last) option: l=" << last << ", max=" << max_in_paths << endl;
+        cerr << EXE_NAME << ": error: given out-of-bounds final index with -l (--last) option: l=" << last << ", max=" << max_sequence_size << endl;
         return EXIT_FAILURE;
     }
     if (first > last)
@@ -89,25 +89,25 @@ int main(int argc, char const *argv[])
     }
     
     // Process the input paths for the sequence.
-    vector<string> sequence_paths( last-first+1 );
+    vector<string> neighbour_paths( last-first+1 );
     for (int i = 0; i < (last-first+1); i++)
-        sequence_paths[i] = parse.nonOption(i+first-1);
+        neighbour_paths[i] = parse.nonOption(i+first-1);
     
     //cout << "Using trajectories:" << endl;
     //for (int i=0; i < (last-first+1); i++)
-    //    cout << "  " << in_paths[i] << endl;
+    //    cout << "  " << neighbour_paths[i] << endl;
     
     trajectory Trajectory;
     
     cout << "Reading data..." << endl;
     
-    Trajectory.read_sequence(sequence_paths);
+    Trajectory.read_sequence_neighbours(neighbour_paths);
     
     cout << "The trajectory length is " << Trajectory.length() << endl;
     
     bool sorting=false;
     Trajectory.compute_neighbour_correlation(sorting);
-    Trajectory.save_neighbour_correlation(output_file);
+    Trajectory.save_neighbour_correlation(output_path);
     
     return EXIT_SUCCESS;
 }
