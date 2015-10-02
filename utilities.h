@@ -16,17 +16,6 @@ T StringToNum ( std::string &Text )
 inline std::string const& to_string(std::string const& s) { return s; }
 
 template<typename... Args>
-std::string stringer(Args const&... args)
-{
-    std::string result;
-    using ::to_string;
-    using std::to_string;
-    int unpack[]{0, (result += to_string(args), 0)...};
-    static_cast<void>(unpack);
-    return result;
-}
-
-template<typename... Args>
 std::string stringify(Args const&... args)
 {
     std::string result;
