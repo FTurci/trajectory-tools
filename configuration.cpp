@@ -11,7 +11,6 @@ configuration::configuration()
 
 }
 
-
 void configuration::read_neighbours(std::string filename)
 {
     std::ifstream file(filename.c_str());

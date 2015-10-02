@@ -23,7 +23,7 @@ public:
     // exmperimental g(r)
     void experimental_radial_distr();
     // simulation g(r)
-    void radial_distr();
+    void radial_distr(int nbins,double biwidth);
 
 
 private:
