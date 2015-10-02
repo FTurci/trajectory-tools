@@ -25,13 +25,18 @@ public:
 
 private:
     std::vector< std::vector<int> > neighbour_table;
-    std::vector<double> g_of_r;
-    std::vector<double> exp_g_of_r;
+    // g(r)
+    std::vector<double> g;
+    // experimental g(r)
+    std::vector<double> experimental_g;
+
 
     // number of particles
     int Npart;
     // box sizes
     std::vector<double> box;
+
+    std::vector<double> coordinates;
 
 };
 
