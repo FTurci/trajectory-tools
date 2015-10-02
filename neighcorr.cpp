@@ -93,18 +93,6 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < (last-first+1); ++i)
         neighbour_paths[i] = parse.nonOption(i+first-1);
     
-    string hi = to_string(5);
-    cout << hi << endl;
-    try
-    {
-        throw Exception("hello");
-    }
-    catch (Exception& e)
-    {
-        cerr << e.what() << endl;
-    }
-    throw "hi";
-    
     //cout << "Using trajectories:" << endl;
     //for (int i=0; i < (last-first+1); i++)
     //    cout << "  " << neighbour_paths[i] << endl;
