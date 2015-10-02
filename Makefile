@@ -6,7 +6,7 @@ OBJS	= neighcorr.o trajectory.o configuration.o
 
 all: $(BINS) $(OBJLIBS)
 
-neighcorr: $(OBJS)
+neighcorr: $(OBJS) optionparser.h
 	$(LINK) neighcorr $(OBJS)
 
 neighcorr.o: neighcorr.cpp trajectory.o

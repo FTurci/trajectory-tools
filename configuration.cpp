@@ -1,14 +1,19 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>  
+#include <algorithm>
+
 #include "configuration.h"
 #include "utilities.h"
 
-configuration::configuration(){
+configuration::configuration()
+{
 
 }
 
 
-void configuration::read_neighbours(std::string filename){
-
-
+void configuration::read_neighbours(std::string filename)
+{
     std::ifstream file(filename.c_str());
     if(!file.good()){std::cerr<<"ERROR: the file "<<filename<<" does not exist\n Forced exit.\n";}
     std::vector< std::vector<int> >table;
@@ -97,3 +102,4 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
 
     return sum/this->Npart;
 }
+

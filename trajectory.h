@@ -1,14 +1,15 @@
-#ifndef __trajectory_H
-#define __trajectory_H
-
+#ifndef __TRAJECTORY_H
+#define __TRAJECTORY_H
 
 #include "configuration.h"
+
 
 class trajectory
 {
 public:
     trajectory();
-    void read_sequence(std::string stem, int first, int last);
+    // void read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths=std::vector<string>());
+    void read_sequence_neighbours(std::vector<std::string> neighbour_paths);
     void print_configuration(int frame);
 
     void compute_neighbour_correlation(bool sorting);
@@ -22,4 +23,6 @@ private:
 
     /* data */
 };
+
 #endif
+

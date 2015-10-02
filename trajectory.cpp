@@ -1,33 +1,35 @@
 #include "trajectory.h"
+#include <iostream>
+#include <fstream>
 #include <iomanip>
+using namespace std;
 
 
-trajectory::trajectory(){
+trajectory::trajectory()
+{
 
 }
-void trajectory::read_sequence(std::string stem, int first, int last){
 
-    for (int i = first; i < last; ++i)
+void trajectory::read_neighbour_sequence(vector<string> path_list)
+{
+    for (int i = 0; i < path_list.size(); i++)
     {
-        std::ostringstream ss;
-        ss <<stem<< std::setw(6) << std::setfill('0') << i;
-        std::string str = ss.str();
-
         configuration C;
         C.read_neighbours(str);
         this->sequence.push_back(C);
     }
     this->neigh_corr.resize(sequence.size());
     this->neigh_norm.resize(sequence.size());
-  
 }
 
-void trajectory::print_configuration(int frame){
+void trajectory::print_configuration(int frame)
+{
     this->sequence[frame].print_neighbours();
 }
 
 
-void trajectory::compute_neighbour_correlation(bool sorting){
+void trajectory::compute_neighbour_correlation(bool sorting)
+{
     for (int t = 0; t < this->sequence.size()-1; ++t)
     {   
         for (int tt = t+1; tt < this->sequence.size(); ++tt)
@@ -57,3 +59,4 @@ void trajectory::save_neighbour_correlation(std::string filename){
 int trajectory::length(){
     return this->sequence.size();
 }
+

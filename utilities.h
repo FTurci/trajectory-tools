@@ -1,9 +1,6 @@
-#ifndef __utilities_H
-#define __utilities_H
+#ifndef __UTILITIES_H
+#define __UTILITIES_H
 
-//#include <iostream>
-//#include <fstream>
-//#include <vector>
 #include <string>
 #include <sstream>  
 

@@ -1,14 +1,8 @@
-#ifndef __configuration_H
-#define __configuration_H
+#ifndef __CONFIGURATION_H
+#define __CONFIGURATION_H
 
-
-#include <iostream>
-#include <fstream>
 #include <vector>
 #include <string>
-#include <sstream>  
-#include <algorithm>
-
 
 
 class configuration
