@@ -6,12 +6,12 @@
 #include "configuration.h"
 #include "utilities.h"
 
-configuration::configuration()
+Configuration::Configuration()
 {
 
 }
 
-void configuration::read_neighbours(std::string filename)
+void Configuration::read_neighbours(std::string filename)
 {
     std::ifstream file(filename.c_str());
     if(!file.good()){std::cerr<<"ERROR: the file "<<filename<<" does not exist\n Forced exit.\n";}
@@ -38,7 +38,7 @@ void configuration::read_neighbours(std::string filename)
 
 }
 
-void configuration::print_neighbours(int first, int last){
+void Configuration::print_neighbours(int first, int last){
     for (int i = first; i < last; ++i)
     {
         for (int j = 0; j < neighbour_table[i].size(); ++j)
@@ -49,7 +49,7 @@ void configuration::print_neighbours(int first, int last){
     }
 
 }
-void configuration::print_neighbours(){
+void Configuration::print_neighbours(){
     for (int i = 0; i < this->Npart; ++i)
     {
         for (int j = 0; j < neighbour_table[i].size(); ++j)
@@ -63,7 +63,7 @@ void configuration::print_neighbours(){
 
 // compute the average value of the intersection between
 // the list of neighbours of two configurations
-double configuration::neighbour_overlap(configuration b, bool sorting){
+double Configuration::neighbour_overlap(Configuration b, bool sorting){
     double sum=0;
     if(sorting==false){
         for (int i = 0; i < this->Npart; ++i)
@@ -103,7 +103,7 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
 }
 
 
-void configuration::radial_distr(int nbins,double biwidth){
+void Configuration::radial_distr(int nbins,double biwidth){
 /*    double rmax=nbins*binwidth;
     int bin;
     this->g.resize(nbins);

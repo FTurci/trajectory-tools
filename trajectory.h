@@ -17,7 +17,7 @@ public:
     int length();
 private:
 
-    std::vector<configuration> sequence;
+    std::vector<Configuration> sequence;
     std::vector<double> neigh_corr;
     std::vector<double> neigh_norm;
 

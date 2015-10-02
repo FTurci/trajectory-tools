@@ -15,9 +15,14 @@ void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<str
 
 void Trajectory::read_sequence_neighbours(vector<string> path_list)
 {
+    // Error checking: this sequence must be compatible with any sequences already loaded, otherwise it cannot be part of the same trajectory.
+    if (this->sequence.size())
+    {
+    }
+    
     for (int i = 0; i < path_list.size(); ++i)
     {
-        configuration C;
+        Configuration C;
         C.read_neighbours(path_list[i]);
         this->sequence.push_back(C);
     }
