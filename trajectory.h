@@ -8,7 +8,8 @@ class trajectory
 {
 public:
     trajectory();
-    void read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths=std::vector<string>());
+    void read_sequence(std::vector<std::string> config_paths,
+                       std::vector<std::string> neighbour_paths=std::vector<std::string>());
     void read_sequence_neighbours(std::vector<std::string> neighbour_paths);
     void print_configuration(int frame);
 
