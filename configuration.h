@@ -1,9 +1,9 @@
 #ifndef __CONFIGURATION_H
 #define __CONFIGURATION_H
 
-//#include <array>
 #include <vector>
 #include <string>
+
 
 template <unsigned int d>
 class Species
