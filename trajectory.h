@@ -4,10 +4,10 @@
 #include "configuration.h"
 
 
-class trajectory
+class Trajectory
 {
 public:
-    trajectory();
+    Trajectory();
     void read_sequence(std::vector<std::string> config_paths,
                        std::vector<std::string> neighbour_paths=std::vector<std::string>());
     void read_sequence_neighbours(std::vector<std::string> neighbour_paths);

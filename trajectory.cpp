@@ -5,16 +5,16 @@
 using namespace std;
 
 
-trajectory::trajectory()
+Trajectory::Trajectory()
 {
 
 }
 
-void trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
+void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
 {
 }
 
-void trajectory::read_sequence_neighbours(vector<string> path_list)
+void Trajectory::read_sequence_neighbours(vector<string> path_list)
 {
     for (int i = 0; i < path_list.size(); ++i)
     {
@@ -26,13 +26,13 @@ void trajectory::read_sequence_neighbours(vector<string> path_list)
     this->neigh_norm.resize(sequence.size());
 }
 
-void trajectory::print_configuration(int frame)
+void Trajectory::print_configuration(int frame)
 {
     this->sequence[frame].print_neighbours();
 }
 
 
-void trajectory::compute_neighbour_correlation(bool sorting)
+void Trajectory::compute_neighbour_correlation(bool sorting)
 {
     for (int t = 0; t < this->sequence.size()-1; ++t)
     {   
@@ -50,7 +50,7 @@ void trajectory::compute_neighbour_correlation(bool sorting)
    this->neigh_corr[0]=1;
  }
 
-void trajectory::save_neighbour_correlation(std::string filename){
+void Trajectory::save_neighbour_correlation(std::string filename){
     std::ofstream fout(filename);
 
     for (int i = 0; i < this->sequence.size(); ++i)
@@ -60,7 +60,7 @@ void trajectory::save_neighbour_correlation(std::string filename){
     fout.close();
 }
 
-int trajectory::length(){
+int Trajectory::length(){
     return this->sequence.size();
 }
 
