@@ -11,7 +11,6 @@ configuration::configuration()
 
 }
 
-
 void configuration::read_neighbours(std::string filename)
 {
     std::ifstream file(filename.c_str());
@@ -33,18 +32,18 @@ void configuration::read_neighbours(std::string filename)
             count++;
         }
         // cout<<neighs.size()<<endl;
-        this->Neighbour_Table.push_back(neighs);
+        this->neighbour_table.push_back(neighs);
     }
-    this->Npart=Neighbour_Table.size();
+    this->Npart=neighbour_table.size();
 
 }
 
 void configuration::print_neighbours(int first, int last){
     for (int i = first; i < last; ++i)
     {
-        for (int j = 0; j < Neighbour_Table[i].size(); ++j)
+        for (int j = 0; j < neighbour_table[i].size(); ++j)
         {
-            std::cout<<this->Neighbour_Table[i][j]<<" ";
+            std::cout<<this->neighbour_table[i][j]<<" ";
         }
             std::cout<<std::endl;
     }
@@ -53,9 +52,9 @@ void configuration::print_neighbours(int first, int last){
 void configuration::print_neighbours(){
     for (int i = 0; i < this->Npart; ++i)
     {
-        for (int j = 0; j < Neighbour_Table[i].size(); ++j)
+        for (int j = 0; j < neighbour_table[i].size(); ++j)
         {
-            std::cout<<this->Neighbour_Table[i][j]<<" ";
+            std::cout<<this->neighbour_table[i][j]<<" ";
         }
             std::cout<<std::endl;
     }
@@ -70,7 +69,7 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
         for (int i = 0; i < this->Npart; ++i)
         {   
             std::vector <int> common;
-            std::set_intersection(this->Neighbour_Table[i].begin(), this->Neighbour_Table[i].end(), b.Neighbour_Table[i].begin(),  b.Neighbour_Table[i].end(), std::back_inserter(common));
+            std::set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(),  b.neighbour_table[i].end(), std::back_inserter(common));
 
             // std::cout<<"particle "<<i<<std::endl;
             // for (int p = 0; p < common.size(); ++p)
@@ -79,8 +78,8 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
             // }
             // std::cout<<std::endl;
 
-            // std::cout<<"==>"<<common.size()<<" "<<Neighbour_Table
-            sum+=common.size()/(double)Neighbour_Table[i].size();
+            // std::cout<<"==>"<<common.size()<<" "<<neighbour_table
+            sum+=common.size()/(double)neighbour_table[i].size();
 
         }
         
@@ -90,12 +89,12 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
         for (int i = 0; i < this->Npart; ++i)
         { 
             std::vector <int> common;
-            std::sort(this->Neighbour_Table[i].begin(), this->Neighbour_Table[i].end());
-            std::sort(b.Neighbour_Table[i].begin(), b.Neighbour_Table[i].end());
+            std::sort(this->neighbour_table[i].begin(), this->neighbour_table[i].end());
+            std::sort(b.neighbour_table[i].begin(), b.neighbour_table[i].end());
 
-            std::set_intersection(this->Neighbour_Table[i].begin(), this->Neighbour_Table[i].end(), b.Neighbour_Table[i].begin(),  b.Neighbour_Table[i].end(), std::back_inserter(common));
+            std::set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(),  b.neighbour_table[i].end(), std::back_inserter(common));
 
-            sum+=common.size()/Neighbour_Table[i].size();
+            sum+=common.size()/neighbour_table[i].size();
         }
     }
 
@@ -103,3 +102,36 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
     return sum/this->Npart;
 }
 
+
+void configuration::radial_distr(int nbins,double biwidth){
+    double rmax=nbins*binwidth;
+    int bin;
+    this->g.resize(nbins);
+    // dx,dy,dz...
+    std::vector<double> deltas;
+    for (int i=0; i<this->Npart-1; i++) 
+    {
+        for (int j=i+1; j<this->Npart; j++)
+        {
+            this->compute_differences(deltas);
+            this->periodic_boundaries(deltas);
+
+            double r=norm(deltas); // calc distance
+
+            if (r<rmax) //within assigned distance from reference
+                {   
+                    bin= (int)(r/binwidth);
+                    gr[bin]+=2;
+                }
+        }
+    }
+
+    for ( int i=0; i< nbins; ++i )
+        {
+            //normalise
+            double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
+            double nid=(4./3.)*M_PI*vol*this->density; //3D
+            g[i]/=nid*this->Npart; //scale         
+        }
+
+}
