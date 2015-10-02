@@ -90,7 +90,7 @@ int main(int argc, char const *argv[])
     
     // Process the input paths for the sequence.
     vector<string> neighbour_paths( last-first+1 );
-    for (int i = 0; i < (last-first+1); i++)
+    for (int i = 0; i < (last-first+1); ++i)
         neighbour_paths[i] = parse.nonOption(i+first-1);
     
     //cout << "Using trajectories:" << endl;

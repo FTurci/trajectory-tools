@@ -10,9 +10,13 @@ trajectory::trajectory()
 
 }
 
+void trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
+{
+}
+
 void trajectory::read_sequence_neighbours(vector<string> path_list)
 {
-    for (int i = 0; i < path_list.size(); i++)
+    for (int i = 0; i < path_list.size(); ++i)
     {
         configuration C;
         C.read_neighbours(path_list[i]);

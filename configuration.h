@@ -11,7 +11,7 @@ public:
     configuration();
 
     void read_neighbours(std::string file);
-    void print_neighbours(int first_particle,int last_particle);
+    void print_neighbours(int first_particle, int last_particle);
     // print all
     void print_neighbours();
 
