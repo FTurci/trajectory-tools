@@ -103,3 +103,36 @@ double configuration::neighbour_overlap(configuration b, bool sorting){
     return sum/this->Npart;
 }
 
+
+void configuration::radial_distr(int nbins,double biwidth){
+    double rmax=nbins*binwidth;
+    int bin;
+    this->g.resize(nbins);
+    // dx,dy,dz...
+    std::vector<double> deltas;
+    for (int i=0; i<this->Npart-1; i++) 
+    {
+        for (int j=i+1; j<this->Npart; j++)
+        {
+            this->compute_differences(deltas);
+            this->periodic_boundaries(deltas);
+
+            double r=norm(deltas); // calc distance
+
+            if (r<rmax) //within assigned distance from reference
+                {   
+                    bin= (int)(r/binwidth);
+                    gr[bin]+=2;
+                }
+        }
+    }
+
+    for ( int i=0; i< nbins; ++i )
+        {
+            //normalise
+            double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
+            double nid=(4./3.)*M_PI*vol*rho; //3D
+            g[i]/=nid*this->Npart; //scale         
+        }
+
+}

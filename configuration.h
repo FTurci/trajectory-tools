@@ -14,6 +14,8 @@ public:
     void print_neighbours(int first_particle, int last_particle);
     // print all
     void print_neighbours();
+    // apply periodic boundaries to values
+    void periodic_boundaries(std::vector<double> &values);
 
     // Pair correlations:
     // compute the average overlap between the lists of neighbours
@@ -22,6 +24,7 @@ public:
     void experimental_radial_distr();
     // simulation g(r)
     void radial_distr();
+
 
 private:
     std::vector< std::vector<int> > neighbour_table;
@@ -33,6 +36,8 @@ private:
 
     // number of particles
     int Npart;
+    // number density
+    double density;
     // box sizes
     std::vector<double> box;
 
