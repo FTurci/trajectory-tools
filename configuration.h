@@ -19,9 +19,9 @@ public:
     // compute the average overlap between the lists of neighbours
     double neighbour_overlap(configuration b, bool sorting=false);
     // exmperimental g(r)
-    void experimental_pair_correlation();
+    void experimental_radial_distr();
     // simulation g(r)
-    void pair_correlation();
+    void radial_distr();
 
 private:
     std::vector< std::vector<int> > neighbour_table;
