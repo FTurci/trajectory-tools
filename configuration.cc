@@ -9,24 +9,30 @@ using namespace std;
 #include "utilities.h"
 
 
-Configuration::Configuration() : numParticles(0)
+Configuration::Configuration() : num_particles(0)
 {
 
 }
 
 void Configuration::read_xyz(string path)
 {
+    ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
+    this->read_xyz(in);
+    in.close();
+}
+
+void Configuration::read_xyz(istream& in)
+{
     const int d = 3;
     
     if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
-    
-    ifstream in(path);
-    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
-    
+        
     // The first line states the number of particles.
     string line;
     getline(in, line);
     this->num_particles = stoi(line);
+    this->particle_index = vector<ParticleIndex>(this->num_particles);
     
     // The comment line can just be discarded (for now, this may change in later revisions).
     getline(in, line);
@@ -55,9 +61,11 @@ void Configuration::read_xyz(string path)
         // Get the coordinates and add them to the list.
         for (unsigned int c = 0; c < d; c++) in >> x[c];
         positions[species_index].insert(positions[species_index].end(), x, x+d);
+        
+        // Bookkeeping so every particle has a unique id (based on their order in the xyz file).
+        this->particle_index[n].species = species_index;
+        this->particle_index[n].index = (positions[species_index].size()/d)-1;
     }
-    
-    in.close();
     
     // Save the coordinate data as static-length species, using the minimum storage space.
     for (auto it = index_list.begin(); it != index_list.end(); ++it)
@@ -69,23 +77,15 @@ void Configuration::read_xyz(string path)
     }
 }
 
-void Configuration::print_positions(ostream& out) const
+void Configuration::read_xyz(string path, const vector<unsigned int>& species_distribution)
 {
-    const int d = 3;
-    for (unsigned int i = 0; i < this->particles.size(); ++i)
-    {
-        const Species<d>& sp = this->particles[i];
-        out << "species " << i << ": " << sp.size() << " particles" << endl;
-        for (unsigned int n = 0; n < sp.size(); ++n)
-        {
-            for (unsigned int c = 0; c < d; ++c)
-                out << "  " << sp(n,c);
-            out << endl;
-        }
-    }
+    ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
+    this->read_xyz(in, species_distribution);
+    in.close();
 }
 
-void Configuration::read_xyz(string path, const vector<unsigned int>& species_distribution)
+void Configuration::read_xyz(std::istream& in, const vector<unsigned int>& species_distribution)
 {
     const int d = 3;
     
@@ -96,7 +96,11 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     // Make sure the given distribution is compatible with any other data structures we have.
     unsigned int n = 0;
     for (auto it = species_distribution.begin(); it != species_distribution.end(); ++it) n += *it;
-    if (!this->num_particles) this->num_particles = n;
+    if (!this->num_particles)
+    {
+        this->num_particles = n;
+        this->particle_index = vector<ParticleIndex>(this->num_particles);
+    }
     else
     {
         if (this->num_particles != n)
@@ -118,14 +122,11 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     }
     else this->dispersity = vector<unsigned int>(species_distribution);
     
-    ifstream in(path);
-    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
-    
     // The first line states the number of particles.
     string line;
     getline(in, line);
     if (stoul(line) != this->num_particles)
-        throw Exception(__PRETTY_FUNCTION__, ": file ", path, " contains ", stoi(line),
+        throw Exception(__PRETTY_FUNCTION__, ": attempting to read configuration with ", stoi(line),
                         " particles when configuration expects ", this->num_particles);
     
     // The comment line can just be discarded (for now, this may change in later revisions).
@@ -133,9 +134,7 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     
     // Preallocate the data types.
     for (auto it = this->dispersity.begin(); it != this->dispersity.end(); ++it)
-    {
         this->particles.push_back( Species<d>(*it) );
-    }
     
     // Declare all variables outside of the loop for optimisation.
     string species;
@@ -153,7 +152,7 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
             species_index = index_list.size();
             index_list[species] = species_index;
             if (index_list.size() > species_distribution.size())
-                throw Exception(__PRETTY_FUNCTION__, ": more species found than expected in ", path,
+                throw Exception(__PRETTY_FUNCTION__, ": more species found than expected",
                                 ": found (at least)=", index_list.size(), ", expected=", species_distribution.size());
         }
         else species_index = found->second;
@@ -161,27 +160,25 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
         // Check this new particle does not violate the prescribed dispersity.
         count[species_index] += 1;
         if (count[species_index] > this->dispersity[species_index])
-            throw Exception(__PRETTY_FUNCTION__, ": more particles found of species ", species, " than expected in ",
-                            path, ": found (at least)=", count[species_index], ", expected=", this->dispersity[species_index]);
+            throw Exception(__PRETTY_FUNCTION__, ": more particles found of species ", species, " than expected",
+                            ": found (at least)=", count[species_index], ", expected=", this->dispersity[species_index]);
         
         // Get the coordinates.
         for (unsigned int c = 0; c < d; c++)
             in >> this->particles[species_index]( count[species_index]-1, c );
     }
-    
-    in.close();
 }
 
-void Configuration::read_neighbours(std::string filename)
+void Configuration::read_neighbours(std::string path)
 {
-    std::ifstream file(filename.c_str());
-    if(!file.good()){std::cerr<<"ERROR: the file "<<filename<<" does not exist\n Forced exit.\n";}
+    std::ifstream file(path);
+    if(!file.good()) std::cerr << "ERROR: the file " << path << " does not exist\n Forced exit.\n";
     std::vector< std::vector<int> >table;
     for (std::string line; std::getline(file, line); )
     {   
         std::stringstream stream;
         stream.str(line);
-    
+        
         int count=0;
         std::vector<int> neighs;
         for (std::string s; std::getline(stream, s,' '); ){
@@ -195,31 +192,44 @@ void Configuration::read_neighbours(std::string filename)
         // cout<<neighs.size()<<endl;
         this->neighbour_table.push_back(neighs);
     }
-    this->num_particles=neighbour_table.size();
-
+    this->num_particles=neighbour_table.size()
 }
 
-void Configuration::print_neighbours(int first, int last){
+void Configuration::print_positions(ostream& out) const
+{
+    const int d = 3;
+    for (unsigned int i = 0; i < this->particles.size(); ++i)
+    {
+        const Species<d>& sp = this->particles[i];
+        out << "species " << i << ": " << sp.size() << " particles" << endl;
+        for (unsigned int n = 0; n < sp.size(); ++n)
+        {
+            for (unsigned int c = 0; c < d; ++c)
+                out << "  " << sp(n,c);
+            out << endl;
+        }
+    }
+}
+
+void Configuration::print_neighbours(int first, int last) const
+{
     for (int i = first; i < last; ++i)
     {
         for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
-        {
-            std::cout<<this->neighbour_table[i][j]<<" ";
-        }
-            std::cout<<std::endl;
+            std::cout << this->neighbour_table[i][j] << " ";
+        std::cout << std::endl;
     }
 
 }
-void Configuration::print_neighbours(){
+
+void Configuration::print_neighbours() const
+{
     for (unsigned int i = 0; i < this->num_particles; ++i)
     {
         for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
-        {
-            std::cout<<this->neighbour_table[i][j]<<" ";
-        }
-            std::cout<<std::endl;
+            std::cout << this->neighbour_table[i][j] <<" ";
+        std::cout << std::endl;
     }
-
 }
 
 // compute the average value of the intersection between
@@ -229,75 +239,73 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     if (sorting==false)
     {
         for (unsigned int i = 0; i < this->num_particles; ++i)
-        {   
-            std::vector <int> common;
-            std::set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(),  b.neighbour_table[i].end(), std::back_inserter(common));
-
+        {
+            vector <int> common;
+            set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(), b.neighbour_table[i].end(), back_inserter(common));
+            
             // std::cout<<"particle "<<i<<std::endl;
             // for (int p = 0; p < common.size(); ++p)
             // {
             //     std::cout<<common[p]<<" ";
             // }
             // std::cout<<std::endl;
-
+            
             // std::cout<<"==>"<<common.size()<<" "<<neighbour_table
             sum+=common.size()/(double)neighbour_table[i].size();
-
         }
-        
     }
     else
     {
         // in case the neighbours are not sorted...
         for (unsigned int i = 0; i < this->num_particles; ++i)
-        { 
-            std::vector <int> common;
-            std::sort(this->neighbour_table[i].begin(), this->neighbour_table[i].end());
-            std::sort(b.neighbour_table[i].begin(), b.neighbour_table[i].end());
-
-            std::set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(),  b.neighbour_table[i].end(), std::back_inserter(common));
-
+        {
+            vector <int> common;
+            sort(this->neighbour_table[i].begin(), this->neighbour_table[i].end());
+            sort(b.neighbour_table[i].begin(), b.neighbour_table[i].end());
+            
+            set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(), b.neighbour_table[i].end(), back_inserter(common));
+            
             sum+=common.size()/neighbour_table[i].size();
         }
     }
-
-
+    
     return sum/this->num_particles;
 }
 
 
-void Configuration::radial_distr(int nbins,double biwidth){
+const std::vector<double>& Configuration::radial_distr(int nbins, double biwidth)
+{
     cout << nbins << endl;
     cout << biwidth << endl;
-/*    double rmax=nbins*binwidth;
+    
+    double rmax = nbins*binwidth;
     int bin;
     this->g.resize(nbins);
     // dx,dy,dz...
     std::vector<double> deltas;
-    for (int i=0; i<this->num_particles-1; i++) 
+    for (unsigned int i=0; i < (this->num_particles-1); i++) 
     {
-        for (int j=i+1; j<this->num_particles; j++)
+        for (unsigned int j=i+1; j < this->num_particles; j++)
         {
             this->compute_differences(deltas);
-            this->periodic_boundaries(deltas);
-
+            //this->periodic_boundaries(deltas);
+            
             double r=norm(deltas); // calc distance
-
+            
             if (r<rmax) //within assigned distance from reference
-                {   
-                    bin= (int)(r/binwidth);
-                    gr[bin]+=2;
-                }
+            {
+                bin = (int)(r/binwidth);
+                gr[bin] += 2;
+            }
         }
     }
-
-    for ( int i=0; i< nbins; ++i )
-        {
-            //normalise
-            double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
-            double nid=(4./3.)*M_PI*vol*this->density; //3D
-            g[i]/=nid*this->num_particles; //scale         
-        }
-*/
+    
+    for ( int i=0; i < nbins; ++i )
+    {
+        //normalise
+        double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
+        double nid=(4./3.)*M_PI*vol*this->density; //3D
+        g[i]/=nid*this->num_particles; //scale         
+    }
 }
 
