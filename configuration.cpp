@@ -2,13 +2,77 @@
 #include <fstream>
 #include <sstream>  
 #include <algorithm>
+#include <map>
+using namespace std;
 
 #include "configuration.h"
 #include "utilities.h"
 
-Configuration::Configuration()
+Configuration::Configuration() : numParticles(0)
 {
 
+}
+
+
+void Configuration::read_xyz(string path)
+{
+    if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
+    
+    ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
+    
+    // The first line states the number of particles.
+    string line;
+    getline(in, line);
+    this->numParticles = stoi(line);
+    
+    // The comment line can just be discarded (for now, this may change in later revisions).
+    getline(in, line);
+    
+    // Declare all variables outside of the loop for optimisation.
+    // NB: this could be unnecessary as this is not meant to be a fast function.
+    string species;
+    int species_index;
+    map<string, int> index_list;
+    map<string, int>::iterator found;
+    vector< vector<double> > positions;
+    double x[3];
+    for (unsigned int i = 0; i < this->numParticles; ++i)
+    {
+        in >> species;
+        // If this is a new species then we have to add the new data structures for it.
+        found = index_list.find(species);
+        if (found == index_list.end())
+        {
+            species_index = positions.size();
+            positions.push_back( vector<double>() );
+            index_list[species] = species_index;
+        }
+        else species_index = found->second;
+        
+        // Get the coordinates.
+        in >> x[0] >> x[1] >> x[2];
+        positions[species_index].insert(positions[species_index].end(), x, x+3);
+    }
+    
+    in.close();
+    
+    // Save the coordinate data as static-length species.
+    for (auto it = index_list.begin(); it != index_list.end(); ++it)
+    {
+        species_index = it->second;
+        this->particles.push_back( Species<3>(positions[species_index]) );
+    }
+    
+    /*********** Debug: print out every species' coordinate data. *************/
+    for (unsigned int i = 0; i < this->particles.size(); ++i)
+    {
+        const Species<3>& sp = this->particles[i];
+        cout << "species " << i << ": " << sp.size() << " particles" << endl;
+        for (unsigned int n = 0; n < sp.size(); ++n)
+            cout << "  " << sp(n,0) << " " << sp(n,1) << " " << sp(n,2) << endl;
+    }
+    /**********                   <\Debug>                ********************/
 }
 
 void Configuration::read_neighbours(std::string filename)
@@ -41,7 +105,7 @@ void Configuration::read_neighbours(std::string filename)
 void Configuration::print_neighbours(int first, int last){
     for (int i = first; i < last; ++i)
     {
-        for (int j = 0; j < neighbour_table[i].size(); ++j)
+        for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
         {
             std::cout<<this->neighbour_table[i][j]<<" ";
         }
@@ -52,7 +116,7 @@ void Configuration::print_neighbours(int first, int last){
 void Configuration::print_neighbours(){
     for (int i = 0; i < this->Npart; ++i)
     {
-        for (int j = 0; j < neighbour_table[i].size(); ++j)
+        for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
         {
             std::cout<<this->neighbour_table[i][j]<<" ";
         }
@@ -104,6 +168,8 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
 
 
 void Configuration::radial_distr(int nbins,double biwidth){
+    cout << nbins << endl;
+    cout << biwidth << endl;
 /*    double rmax=nbins*binwidth;
     int bin;
     this->g.resize(nbins);

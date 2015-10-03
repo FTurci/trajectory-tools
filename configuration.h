@@ -9,24 +9,21 @@ template <unsigned int d>
 class Species
 {
 public:
-    Species(unsigned long N) : coords(d*N), N(N) { }
+    Species(unsigned long N = 0) : coords(d*N), N(N) { }
     Species(const Species& copy) : coords(copy.coords), N(copy.N) { }
+    Species(const std::vector<double>& copy) : coords(copy), N(copy.size()/d) { }
     
-    inline double& operator[] (int n)
-    {
-        return coords[n];
-    }
-    inline double operator[] (int n) const
-    {
-        return coords[n];
-    }
     inline double& operator() (int n, int c)
     {
-        return coords[n*N+c];
+        return this->coords[n*d+c];
     }
     inline double operator() (int n, int c) const
     {
-        return coords[n*N+c];
+        return this->coords[n*d+c];
+    }
+    inline unsigned long size() const
+    {
+        return this->N;
     }
     
 protected:
@@ -34,11 +31,15 @@ protected:
     const unsigned long N;
 };
 
+// Only supports canonical configurations for now, i.e. particle number N is fixed.
 class Configuration
 {
 public:
     Configuration();
     
+    // 'Blind' read function without foreknowledge of number of particles/species etc.
+    // NB: this will be a lot slower than preallocating numbers of particles in other read functions, so should only be used on the first configuration within a trajectory.
+    void read_xyz(std::string path);
     void read_neighbours(std::string file);
     void print_neighbours(int first_particle, int last_particle);
     // print all
@@ -53,24 +54,25 @@ public:
     void experimental_radial_distr();
     // simulation g(r)
     void radial_distr(int nbins,double biwidth);
-
-private:
+    
+protected:
+    unsigned int numParticles;
+    std::vector< Species<3> > particles;
+    
     std::vector< std::vector<int> > neighbour_table;
     // g(r)
     std::vector<double> g;
     // experimental g(r)
     std::vector<double> experimental_g;
-
-
+    
     // number of particles
     int Npart;
     // number density
     double density;
     // box sizes
     std::vector<double> box;
-
+    
     std::vector<double> coordinates;
-
 };
 
 #endif
