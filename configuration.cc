@@ -16,6 +16,8 @@ Configuration::Configuration() : numParticles(0)
 
 void Configuration::read_xyz(string path)
 {
+    const int d = 3;
+    
     if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
     
     ifstream in(path);
@@ -36,23 +38,23 @@ void Configuration::read_xyz(string path)
     map<string, int> index_list;
     map<string, int>::iterator found;
     vector< vector<double> > positions;
-    double x[3];
-    for (unsigned int i = 0; i < this->numParticles; ++i)
+    double x[d];
+    for (unsigned int n = 0; n < this->numParticles; ++n)
     {
         in >> species;
         // If this is a new species then we have to add new data structures for it.
         found = index_list.find(species);
         if (found == index_list.end())
         {
-            species_index = positions.size();
             positions.push_back( vector<double>() );
+            species_index = index_list.size();
             index_list[species] = species_index;
         }
         else species_index = found->second;
         
-        // Get the coordinates.
-        in >> x[0] >> x[1] >> x[2];
-        positions[species_index].insert(positions[species_index].end(), x, x+3);
+        // Get the coordinates and add them to the list.
+        for (unsigned int c = 0; c < d; c++) in >> x[c];
+        positions[species_index].insert(positions[species_index].end(), x, x+d);
     }
     
     in.close();
@@ -62,7 +64,8 @@ void Configuration::read_xyz(string path)
     {
         species_index = it->second;
         positions[species_index].resize( positions[species_index].size() );
-        this->particles.push_back( Species<3>(positions[species_index]) );
+        this->particles.push_back( Species<d>(positions[species_index]) );
+        this->dispersity.push_back( positions[species_index].size()/d );
     }
     
     /*********** Debug: print out every species' coordinate data. *************/
@@ -71,7 +74,112 @@ void Configuration::read_xyz(string path)
         const Species<3>& sp = this->particles[i];
         cout << "species " << i << ": " << sp.size() << " particles" << endl;
         for (unsigned int n = 0; n < sp.size(); ++n)
-            cout << "  " << sp(n,0) << " " << sp(n,1) << " " << sp(n,2) << endl;
+        {
+            for (unsigned int c = 0; c < d; ++c)
+                cout << "  " << sp(n,c);
+            cout << endl;
+        }
+    }
+    /**********                   <\Debug>                ********************/
+}
+
+void Configuration::read_xyz(string path, const vector<unsigned int>& species_distribution)
+{
+    const int d = 3;
+    
+    if (this->particles.size())
+        throw Exception(__PRETTY_FUNCTION__,
+                        ": attempting to load new configuration into a preexisting configuration");
+    
+    // Make sure the given distribution is compatible with any other data structures we have.
+    unsigned int n = 0;
+    for (auto it = species_distribution.begin(); it != species_distribution.end(); ++it) n += *it;
+    if (!this->numParticles) this->numParticles = n;
+    else
+    {
+        if (this->numParticles != n)
+            throw Exception(__PRETTY_FUNCTION__, ": attempting to load incompatible configuration: ",
+                            "new size=", n, " but expected size=", this->numParticles);
+    }
+    if (!this->dispersity.empty())
+    {
+        if (this->dispersity.size() != species_distribution.size())
+            throw Exception(__PRETTY_FUNCTION__, ": attempting to load incompatible configuration: ",
+                            "new species=", species_distribution.size(), " but expected species=", this->dispersity.size());
+        else
+        {
+            for (unsigned int i = 0; i < this->dispersity.size(); i++)
+                if (this->dispersity[i] != species_distribution[i])
+                    throw Exception(__PRETTY_FUNCTION__, ": attempting to load incompatible configuration: ",
+                                    "different dispersities");
+        }
+    }
+    else this->dispersity = vector<unsigned int>(species_distribution);
+    
+    ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
+    
+    // The first line states the number of particles.
+    string line;
+    getline(in, line);
+    if (stoul(line) != this->numParticles)
+        throw Exception(__PRETTY_FUNCTION__, ": file ", path, " contains ", stoi(line),
+                        " particles when configuration expects ", this->numParticles);
+    
+    // The comment line can just be discarded (for now, this may change in later revisions).
+    getline(in, line);
+    
+    // Preallocate the data types.
+    for (auto it = this->dispersity.begin(); it != this->dispersity.end(); ++it)
+    {
+        this->particles.push_back( Species<d>(*it) );
+    }
+    
+    // Declare all variables outside of the loop for optimisation.
+    string species;
+    int species_index;
+    map<string, int> index_list;
+    map<string, int>::iterator found;
+    vector<unsigned int> count( this->dispersity.size() );
+    for (unsigned int n = 0; n < this->numParticles; ++n)
+    {
+        in >> species;
+        // If this is a new species then we have to add new data structures for it.
+        found = index_list.find(species);
+        if (found == index_list.end())
+        {
+            species_index = index_list.size();
+            index_list[species] = species_index;
+            if (index_list.size() > species_distribution.size())
+                throw Exception(__PRETTY_FUNCTION__, ": more species found than expected in ", path,
+                                ": found (at least)=", index_list.size(), ", expected=", species_distribution.size());
+        }
+        else species_index = found->second;
+        
+        // Check this new particle does not violate the prescribed dispersity.
+        count[species_index] += 1;
+        if (count[species_index] > this->dispersity.size())
+            throw Exception(__PRETTY_FUNCTION__, ": more particles found in of species ", species, " than expected in ",
+                            path, ": found (at least)=", count[species_index], ", expected=", this->dispersity.size());
+        
+        // Get the coordinates.
+        for (unsigned int c = 0; c < d; c++)
+            in >> this->particles[species_index]( count[species_index]-1, c );
+    }
+    
+    in.close();
+    
+    /*********** Debug: print out every species' coordinate data. *************/
+    for (unsigned int i = 0; i < this->particles.size(); ++i)
+    {
+        const Species<d>& sp = this->particles[i];
+        cout << "species " << i << ": " << sp.size() << " particles" << endl;
+        for (unsigned int n = 0; n < sp.size(); ++n)
+        {
+            for (unsigned int c = 0; c < d; ++c)
+                cout << "  " << sp(n,c);
+            cout << endl;
+        }
     }
     /**********                   <\Debug>                ********************/
 }

@@ -20,7 +20,13 @@ public:
     //void read_pdb(std::string path);
     //void read_lammps(std::string path);
     // Optimised reading utilities for when the number of particles/species are known in advance, thus avoiding potentially expensive dynamic memory allocation.
-    //void read_xyz(std::string path, std::vector<unsigned int> species_distribution);
+    void read_xyz(std::string path, const std::vector<unsigned int>& species_distribution);
+    
+    //
+    inline const std::vector<unsigned int>& get_dispersity() const
+    {
+        return this->dispersity;
+    }
     
     void read_neighbours(std::string file);
     void print_neighbours(int first_particle, int last_particle);
@@ -40,6 +46,7 @@ public:
 protected:
     unsigned int numParticles;
     std::vector< Species<3> > particles;
+    std::vector<unsigned int> dispersity;
     
     std::vector< std::vector<int> > neighbour_table;
     // g(r)

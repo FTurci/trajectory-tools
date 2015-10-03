@@ -58,8 +58,9 @@ int main(int argc, char const *argv[])
         {
             string path = parse.nonOption(i);
             cout << "processing " << path << "..." << endl;
-            Configuration config;
+            Configuration config, config2;
             config.read_xyz(path);
+            config2.read_xyz(path, config.get_dispersity());
         }
         
         return EXIT_SUCCESS;
