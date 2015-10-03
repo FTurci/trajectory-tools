@@ -13,9 +13,15 @@ class Configuration
 public:
     Configuration();
     
-    // 'Blind' read function without foreknowledge of number of particles/species etc.
-    // NB: this will be a lot slower than preallocating numbers of particles in other read functions, so should only be used on the first configuration within a trajectory.
+    // 'Blind' reads function without foreknowledge of number of particles/species etc.
+    // NB: these will be a lot slower than preallocating numbers of particles in other read functions, so should only be used on the first configuration within a trajectory.
     void read_xyz(std::string path);
+    //void read_xyzr(std::string path);
+    //void read_pdb(std::string path);
+    //void read_lammps(std::string path);
+    // Optimised reading utilities for when the number of particles/species are known in advance, thus avoiding potentially expensive dynamic memory allocation.
+    //void read_xyz(std::string path, std::vector<unsigned int> species_distribution);
+    
     void read_neighbours(std::string file);
     void print_neighbours(int first_particle, int last_particle);
     // print all

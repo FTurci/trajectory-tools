@@ -8,11 +8,11 @@ using namespace std;
 #include "configuration.h"
 #include "utilities.h"
 
+
 Configuration::Configuration() : numParticles(0)
 {
 
 }
-
 
 void Configuration::read_xyz(string path)
 {
@@ -40,7 +40,7 @@ void Configuration::read_xyz(string path)
     for (unsigned int i = 0; i < this->numParticles; ++i)
     {
         in >> species;
-        // If this is a new species then we have to add the new data structures for it.
+        // If this is a new species then we have to add new data structures for it.
         found = index_list.find(species);
         if (found == index_list.end())
         {
@@ -57,10 +57,11 @@ void Configuration::read_xyz(string path)
     
     in.close();
     
-    // Save the coordinate data as static-length species.
+    // Save the coordinate data as static-length species, using the minimum storage space.
     for (auto it = index_list.begin(); it != index_list.end(); ++it)
     {
         species_index = it->second;
+        positions[species_index].resize( positions[species_index].size() );
         this->particles.push_back( Species<3>(positions[species_index]) );
     }
     
