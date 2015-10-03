@@ -1,5 +1,4 @@
 # trajectory-tools
-Test of edit.
 
 Contributors:
 
