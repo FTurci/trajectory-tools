@@ -54,7 +54,7 @@ public:
     void radial_distr(int nbins, double biwidth);
     
 protected:
-    unsigned int numParticles;
+    unsigned int num_particles;
     std::vector< Species<3> > particles;
     std::vector<unsigned int> dispersity;
     

@@ -26,7 +26,7 @@ void Configuration::read_xyz(string path)
     // The first line states the number of particles.
     string line;
     getline(in, line);
-    this->numParticles = stoi(line);
+    this->num_particles = stoi(line);
     
     // The comment line can just be discarded (for now, this may change in later revisions).
     getline(in, line);
@@ -39,7 +39,7 @@ void Configuration::read_xyz(string path)
     map<string, int>::iterator found;
     vector< vector<double> > positions;
     double x[d];
-    for (unsigned int n = 0; n < this->numParticles; ++n)
+    for (unsigned int n = 0; n < this->num_particles; ++n)
     {
         in >> species;
         // If this is a new species then we have to add new data structures for it.
@@ -96,12 +96,12 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     // Make sure the given distribution is compatible with any other data structures we have.
     unsigned int n = 0;
     for (auto it = species_distribution.begin(); it != species_distribution.end(); ++it) n += *it;
-    if (!this->numParticles) this->numParticles = n;
+    if (!this->num_particles) this->num_particles = n;
     else
     {
-        if (this->numParticles != n)
+        if (this->num_particles != n)
             throw Exception(__PRETTY_FUNCTION__, ": attempting to load incompatible configuration: ",
-                            "new size=", n, " but expected size=", this->numParticles);
+                            "new size=", n, " but expected size=", this->num_particles);
     }
     if (!this->dispersity.empty())
     {
@@ -124,9 +124,9 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     // The first line states the number of particles.
     string line;
     getline(in, line);
-    if (stoul(line) != this->numParticles)
+    if (stoul(line) != this->num_particles)
         throw Exception(__PRETTY_FUNCTION__, ": file ", path, " contains ", stoi(line),
-                        " particles when configuration expects ", this->numParticles);
+                        " particles when configuration expects ", this->num_particles);
     
     // The comment line can just be discarded (for now, this may change in later revisions).
     getline(in, line);
@@ -143,7 +143,7 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     map<string, int> index_list;
     map<string, int>::iterator found;
     vector<unsigned int> count( this->dispersity.size() );
-    for (unsigned int n = 0; n < this->numParticles; ++n)
+    for (unsigned int n = 0; n < this->num_particles; ++n)
     {
         in >> species;
         // If this is a new species then we have to add new data structures for it.
@@ -195,7 +195,7 @@ void Configuration::read_neighbours(std::string filename)
         // cout<<neighs.size()<<endl;
         this->neighbour_table.push_back(neighs);
     }
-    this->numParticles=neighbour_table.size();
+    this->num_particles=neighbour_table.size();
 
 }
 
@@ -211,7 +211,7 @@ void Configuration::print_neighbours(int first, int last){
 
 }
 void Configuration::print_neighbours(){
-    for (unsigned int i = 0; i < this->numParticles; ++i)
+    for (unsigned int i = 0; i < this->num_particles; ++i)
     {
         for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
         {
@@ -228,7 +228,7 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     double sum=0;
     if (sorting==false)
     {
-        for (unsigned int i = 0; i < this->numParticles; ++i)
+        for (unsigned int i = 0; i < this->num_particles; ++i)
         {   
             std::vector <int> common;
             std::set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(),  b.neighbour_table[i].end(), std::back_inserter(common));
@@ -249,7 +249,7 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     else
     {
         // in case the neighbours are not sorted...
-        for (unsigned int i = 0; i < this->numParticles; ++i)
+        for (unsigned int i = 0; i < this->num_particles; ++i)
         { 
             std::vector <int> common;
             std::sort(this->neighbour_table[i].begin(), this->neighbour_table[i].end());
@@ -262,7 +262,7 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     }
 
 
-    return sum/this->numParticles;
+    return sum/this->num_particles;
 }
 
 
@@ -274,9 +274,9 @@ void Configuration::radial_distr(int nbins,double biwidth){
     this->g.resize(nbins);
     // dx,dy,dz...
     std::vector<double> deltas;
-    for (int i=0; i<this->numParticles-1; i++) 
+    for (int i=0; i<this->num_particles-1; i++) 
     {
-        for (int j=i+1; j<this->numParticles; j++)
+        for (int j=i+1; j<this->num_particles; j++)
         {
             this->compute_differences(deltas);
             this->periodic_boundaries(deltas);
@@ -296,7 +296,7 @@ void Configuration::radial_distr(int nbins,double biwidth){
             //normalise
             double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
             double nid=(4./3.)*M_PI*vol*this->density; //3D
-            g[i]/=nid*this->numParticles; //scale         
+            g[i]/=nid*this->num_particles; //scale         
         }
 */
 }
