@@ -16,15 +16,14 @@ using namespace option;
 enum  optionIndex { UNKNOWN, HELP, FIRST, LAST, STEP, OUTPUT };
 const Descriptor usage[] =
 {
-    {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: example [options]\n\nOptions:" },
+    {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: neighcorr [options]\n\nOptions:" },
     {HELP,    0, "h", "help",   Arg::None,     "  -h,\t--help\tPrint usage and exit." },
     {FIRST,   0, "f", "first",  Arg::Optional, "  -f[<arg>], \t--first[=<arg>] \tFirst trajecetory index." },
     {LAST,    0, "l", "last",   Arg::Optional, "  -l[<arg>], \t--last[=<arg>]\tLast trajectory index." },
     {STEP,    0, "s", "step",   Arg::Optional, "  -s[<arg>], \t--step[=<arg>]\tSkip frames with a given step." },
     {OUTPUT,  0, "o", "output", Arg::Optional, "  -o,\t--output\tOutput file." },
     {UNKNOWN, 0, "" , ""    ,   Arg::None,     "\nExamples:\n"
-                                               "  example --unknown -- --this_is_no_option\n"
-                                               "  example -unk --plus -ppp file1 file2\n" },
+                                               "  neighcorr ... (need to provide examples)\n"},
     {0,0,0,0,0,0}
 };
 

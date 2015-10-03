@@ -16,11 +16,10 @@ using namespace option;
 enum  optionIndex { UNKNOWN, HELP };
 const Descriptor usage[] =
 {
-    {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: example [options]\n\nOptions:" },
-    {HELP,    0, "h", "help",   Arg::None,     "  -h,\t--help\tPrint usage and exit." },
+    {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: config-test [options]\n\nOptions:" },
+    {HELP,    0, "h", "help",   Arg::None,     "  -h, \t--help  \tPrint usage and exit." },
     {UNKNOWN, 0, "" , ""    ,   Arg::None,     "\nExamples:\n"
-                                               "  example --unknown -- --this_is_no_option\n"
-                                               "  example -unk --plus -ppp file1 file2\n" },
+                                               "  config-test ... (need to provide examples)\n"},
     {0,0,0,0,0,0}
 };
 
@@ -50,7 +49,7 @@ int main(int argc, char const *argv[])
                 cerr << "unknown option: " << opt->name << endl;
             throw Exception("aborting due to unknown options");
         }
-                
+        
         // Make sure we've been given a trajectory.
         const int sequence_size = parse.nonOptionsCount();
         if (!sequence_size) throw Exception("no input paths specified");
