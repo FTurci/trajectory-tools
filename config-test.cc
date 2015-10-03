@@ -61,6 +61,7 @@ int main(int argc, char const *argv[])
             Configuration config, config2;
             config.read_xyz(path);
             config2.read_xyz(path, config.get_dispersity());
+            cout << config << config2;
         }
         
         return EXIT_SUCCESS;

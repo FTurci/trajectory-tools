@@ -67,20 +67,22 @@ void Configuration::read_xyz(string path)
         this->particles.push_back( Species<d>(positions[species_index]) );
         this->dispersity.push_back( positions[species_index].size()/d );
     }
-    
-    /*********** Debug: print out every species' coordinate data. *************/
+}
+
+void Configuration::print_positions(ostream& out) const
+{
+    const int d = 3;
     for (unsigned int i = 0; i < this->particles.size(); ++i)
     {
-        const Species<3>& sp = this->particles[i];
-        cout << "species " << i << ": " << sp.size() << " particles" << endl;
+        const Species<d>& sp = this->particles[i];
+        out << "species " << i << ": " << sp.size() << " particles" << endl;
         for (unsigned int n = 0; n < sp.size(); ++n)
         {
             for (unsigned int c = 0; c < d; ++c)
-                cout << "  " << sp(n,c);
-            cout << endl;
+                out << "  " << sp(n,c);
+            out << endl;
         }
     }
-    /**********                   <\Debug>                ********************/
 }
 
 void Configuration::read_xyz(string path, const vector<unsigned int>& species_distribution)
@@ -158,9 +160,9 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
         
         // Check this new particle does not violate the prescribed dispersity.
         count[species_index] += 1;
-        if (count[species_index] > this->dispersity.size())
-            throw Exception(__PRETTY_FUNCTION__, ": more particles found in of species ", species, " than expected in ",
-                            path, ": found (at least)=", count[species_index], ", expected=", this->dispersity.size());
+        if (count[species_index] > this->dispersity[species_index])
+            throw Exception(__PRETTY_FUNCTION__, ": more particles found of species ", species, " than expected in ",
+                            path, ": found (at least)=", count[species_index], ", expected=", this->dispersity[species_index]);
         
         // Get the coordinates.
         for (unsigned int c = 0; c < d; c++)
@@ -168,20 +170,6 @@ void Configuration::read_xyz(string path, const vector<unsigned int>& species_di
     }
     
     in.close();
-    
-    /*********** Debug: print out every species' coordinate data. *************/
-    for (unsigned int i = 0; i < this->particles.size(); ++i)
-    {
-        const Species<d>& sp = this->particles[i];
-        cout << "species " << i << ": " << sp.size() << " particles" << endl;
-        for (unsigned int n = 0; n < sp.size(); ++n)
-        {
-            for (unsigned int c = 0; c < d; ++c)
-                cout << "  " << sp(n,c);
-            cout << endl;
-        }
-    }
-    /**********                   <\Debug>                ********************/
 }
 
 void Configuration::read_neighbours(std::string filename)
@@ -207,7 +195,7 @@ void Configuration::read_neighbours(std::string filename)
         // cout<<neighs.size()<<endl;
         this->neighbour_table.push_back(neighs);
     }
-    this->Npart=neighbour_table.size();
+    this->numParticles=neighbour_table.size();
 
 }
 
@@ -223,7 +211,7 @@ void Configuration::print_neighbours(int first, int last){
 
 }
 void Configuration::print_neighbours(){
-    for (int i = 0; i < this->Npart; ++i)
+    for (unsigned int i = 0; i < this->numParticles; ++i)
     {
         for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
         {
@@ -238,8 +226,9 @@ void Configuration::print_neighbours(){
 // the list of neighbours of two configurations
 double Configuration::neighbour_overlap(Configuration b, bool sorting){
     double sum=0;
-    if(sorting==false){
-        for (int i = 0; i < this->Npart; ++i)
+    if (sorting==false)
+    {
+        for (unsigned int i = 0; i < this->numParticles; ++i)
         {   
             std::vector <int> common;
             std::set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(),  b.neighbour_table[i].end(), std::back_inserter(common));
@@ -257,9 +246,10 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
         }
         
     }
-    else{
+    else
+    {
         // in case the neighbours are not sorted...
-        for (int i = 0; i < this->Npart; ++i)
+        for (unsigned int i = 0; i < this->numParticles; ++i)
         { 
             std::vector <int> common;
             std::sort(this->neighbour_table[i].begin(), this->neighbour_table[i].end());
@@ -272,7 +262,7 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     }
 
 
-    return sum/this->Npart;
+    return sum/this->numParticles;
 }
 
 
@@ -284,9 +274,9 @@ void Configuration::radial_distr(int nbins,double biwidth){
     this->g.resize(nbins);
     // dx,dy,dz...
     std::vector<double> deltas;
-    for (int i=0; i<this->Npart-1; i++) 
+    for (int i=0; i<this->numParticles-1; i++) 
     {
-        for (int j=i+1; j<this->Npart; j++)
+        for (int j=i+1; j<this->numParticles; j++)
         {
             this->compute_differences(deltas);
             this->periodic_boundaries(deltas);
@@ -306,7 +296,7 @@ void Configuration::radial_distr(int nbins,double biwidth){
             //normalise
             double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
             double nid=(4./3.)*M_PI*vol*this->density; //3D
-            g[i]/=nid*this->Npart; //scale         
+            g[i]/=nid*this->numParticles; //scale         
         }
 */
 }

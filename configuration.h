@@ -1,6 +1,7 @@
 #ifndef __CONFIGURATION_H
 #define __CONFIGURATION_H
 
+#include <iostream>
 #include <vector>
 #include <string>
 
@@ -13,7 +14,7 @@ class Configuration
 public:
     Configuration();
     
-    // 'Blind' reads function without foreknowledge of number of particles/species etc.
+    // 'Blind' read functions, which read position data without foreknowledge of number of particles/species etc.
     // NB: these will be a lot slower than preallocating numbers of particles in other read functions, so should only be used on the first configuration within a trajectory.
     void read_xyz(std::string path);
     //void read_xyzr(std::string path);
@@ -29,11 +30,20 @@ public:
     }
     
     void read_neighbours(std::string file);
+    // apply periodic boundaries to values
+    void periodic_boundaries(std::vector<double> &values);
+    
+    void print_positions(std::ostream& out) const;
     void print_neighbours(int first_particle, int last_particle);
     // print all
     void print_neighbours();
-    // apply periodic boundaries to values
-    void periodic_boundaries(std::vector<double> &values);
+    
+    // Default stream overloads work on the positions.
+    inline friend std::ostream& operator<< (std::ostream& out, const Configuration& config)
+    {
+        config.print_positions(out);
+        return out;
+    }
     
     // Pair correlations:
     // compute the average overlap between the lists of neighbours
@@ -41,7 +51,7 @@ public:
     // exmperimental g(r)
     void experimental_radial_distr();
     // simulation g(r)
-    void radial_distr(int nbins,double biwidth);
+    void radial_distr(int nbins, double biwidth);
     
 protected:
     unsigned int numParticles;
@@ -55,7 +65,7 @@ protected:
     std::vector<double> experimental_g;
     
     // number of particles
-    int Npart;
+    //int Npart;
     // number density
     double density;
     // box sizes
