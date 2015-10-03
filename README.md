@@ -3,8 +3,8 @@ Test of edit.
 
 Contributors:
 
-Francesco Turci
-
 Joshua Robinson
+
+Francesco Turci
 
 (University of Bristol, Royall Group)
