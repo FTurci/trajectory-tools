@@ -18,7 +18,7 @@ config-test.o: config-test.cc optionparser.h trajectory.o
 
 trajectory.o: trajectory.cpp trajectory.h configuration.o
 	$(COMP) trajectory.cpp
-configuration.o: configuration.cpp configuration.h utilities.h
+configuration.o: configuration.cpp configuration.h species.h utilities.h
 	$(COMP) configuration.cpp
 
 clean:
