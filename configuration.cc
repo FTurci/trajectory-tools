@@ -272,9 +272,11 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     return sum/this->num_particles;
 }
 
-
 const vector<double>& Configuration::radial_distribution(unsigned int num_bins, double bin_width)
 {
+    if (!this->num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to compute g(r) on an empty configuration");
+    if (!num_bins) throw Exception(__PRETTY_FUNCTION__, ": invalid num_bins=", num_bins);
+    //if (!this->bin_width > 0.) throw Exception(__PRETTY_FUNCTION__, ": invalid bin_width=", bin_width);
     if (this->g.size() == num_bins && this->g_bin_width == bin_width) return this->g;
     
     const unsigned int d = 3;

@@ -54,8 +54,8 @@ int main(int argc, char const *argv[])
         const int sequence_size = parse.nonOptionsCount();
         if (!sequence_size) throw Exception("no input paths specified");
         // Find g(r):
-        const unsigned int num_bins = 100;
-        const double delta_r = 0.25;
+        const unsigned int num_bins = 50;
+        const double delta_r = 0.1;
         vector<double> g(num_bins);
         for (int i = 0; i < sequence_size; ++i)
         {
