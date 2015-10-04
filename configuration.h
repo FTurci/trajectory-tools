@@ -53,7 +53,7 @@ public:
     // exmperimental g(r)
     void experimental_radial_distr();
     // simulation g(r)
-    const std::vector<double>& radial_distr(int nbins, double biwidth);
+    const std::vector<double>& radial_distribution(unsigned int num_bins, double bin_width);
     
 protected:
     // Particle data.
@@ -63,28 +63,27 @@ protected:
     // NB: These values should essentially be particles[i].size(), but we keep them separate for convenience and to quickly return the size of each population without recalculation.
     std::vector<unsigned int> dispersity;
     
-    // Bookkeeping: other software assigns each particle a unique id so we need to track them also.
+    // Bookkeeping: each particle is assigned a unique id so we can keep track of them individually if need be.
     struct ParticleIndex
     {
         unsigned int species, index;
     };
-    std::vector<ParticleIndex> particle_index;
+    std::vector<ParticleIndex> particle_table;
     
     // ...
     std::vector< std::vector<int> > neighbour_table;
     // g(r)
     std::vector<double> g;
+    double g_bin_width;
     // experimental g(r)
     std::vector<double> experimental_g;
     
     // number of particles
     //int Npart;
     // number density
-    double density;
+    //double density;
     // box sizes
     std::vector<double> box;
-    
-    std::vector<double> coordinates;
 };
 
 #endif

@@ -12,6 +12,14 @@ public:
     Species(const Species& copy) : coords(copy.coords), N(copy.N) { }
     Species(const std::vector<double>& copy) : coords(copy), N(copy.size()/d) { }
     
+    inline double& operator[] (int n)
+    {
+        return this->coords[n*d];
+    }
+    inline const double& operator[] (int n) const
+    {
+        return this->coords[n*d];
+    }
     inline double& operator() (int n, int c)
     {
         return this->coords[n*d+c];

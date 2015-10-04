@@ -53,15 +53,24 @@ int main(int argc, char const *argv[])
         // Make sure we've been given a trajectory.
         const int sequence_size = parse.nonOptionsCount();
         if (!sequence_size) throw Exception("no input paths specified");
-        // Process the input paths for the sequence.
+        // Find g(r):
+        const unsigned int num_bins = 100;
+        const double delta_r = 0.25;
+        vector<double> g(num_bins);
         for (int i = 0; i < sequence_size; ++i)
         {
             string path = parse.nonOption(i);
-            cout << "processing " << path << "..." << endl;
-            Configuration config, config2;
+            //cout << "processing " << path << "..." << endl;
+            Configuration config;
             config.read_xyz(path);
-            config2.read_xyz(path, config.get_dispersity());
-            cout << config << config2;
+            const vector<double>& g_tmp = config.radial_distribution(num_bins, delta_r);
+            for (unsigned int bin = 0; bin < num_bins; ++bin)
+                g[bin] += g_tmp[bin];
+        }
+        for (unsigned int bin = 0; bin < num_bins; ++bin)
+        {
+            g[bin] /= num_bins;
+            cout << bin*delta_r << "\t" << g[bin] << endl;
         }
         
         return EXIT_SUCCESS;

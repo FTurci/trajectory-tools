@@ -9,7 +9,7 @@ using namespace std;
 #include "utilities.h"
 
 
-Configuration::Configuration() : num_particles(0)
+Configuration::Configuration() : num_particles(0), g_bin_width(0.)
 {
 
 }
@@ -32,7 +32,7 @@ void Configuration::read_xyz(istream& in)
     string line;
     getline(in, line);
     this->num_particles = stoi(line);
-    this->particle_index = vector<ParticleIndex>(this->num_particles);
+    this->particle_table = vector<ParticleIndex>(this->num_particles);
     
     // The comment line can just be discarded (for now, this may change in later revisions).
     getline(in, line);
@@ -63,8 +63,8 @@ void Configuration::read_xyz(istream& in)
         positions[species_index].insert(positions[species_index].end(), x, x+d);
         
         // Bookkeeping so every particle has a unique id (based on their order in the xyz file).
-        this->particle_index[n].species = species_index;
-        this->particle_index[n].index = (positions[species_index].size()/d)-1;
+        this->particle_table[n].species = species_index;
+        this->particle_table[n].index = (positions[species_index].size()/d)-1;
     }
     
     // Save the coordinate data as static-length species, using the minimum storage space.
@@ -99,7 +99,7 @@ void Configuration::read_xyz(std::istream& in, const vector<unsigned int>& speci
     if (!this->num_particles)
     {
         this->num_particles = n;
-        this->particle_index = vector<ParticleIndex>(this->num_particles);
+        this->particle_table = vector<ParticleIndex>(this->num_particles);
     }
     else
     {
@@ -192,7 +192,7 @@ void Configuration::read_neighbours(std::string path)
         // cout<<neighs.size()<<endl;
         this->neighbour_table.push_back(neighs);
     }
-    this->num_particles=neighbour_table.size()
+    this->num_particles=neighbour_table.size();
 }
 
 void Configuration::print_positions(ostream& out) const
@@ -273,39 +273,57 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
 }
 
 
-const std::vector<double>& Configuration::radial_distr(int nbins, double biwidth)
+const vector<double>& Configuration::radial_distribution(unsigned int num_bins, double bin_width)
 {
-    cout << nbins << endl;
-    cout << biwidth << endl;
+    if (this->g.size() == num_bins && this->g_bin_width == bin_width) return this->g;
     
-    double rmax = nbins*binwidth;
-    int bin;
-    this->g.resize(nbins);
-    // dx,dy,dz...
-    std::vector<double> deltas;
-    for (unsigned int i=0; i < (this->num_particles-1); i++) 
+    const unsigned int d = 3;
+    const double r_max = num_bins*bin_width;
+    const double r_max_squ = pow(r_max, 2.);
+    
+    // Declare these to make finding particles code more legible.
+    const ParticleIndex* id;
+    const double* r1;
+    const double* r2;
+    // Calculation variables defined here for efficiency.
+    double delta_r_squ;
+    vector<unsigned int> bin_count(num_bins); // should automatically initialise to zeros.
+    unsigned int bin;
+    for (unsigned int i=0; i < (this->num_particles-1); ++i)
     {
-        for (unsigned int j=i+1; j < this->num_particles; j++)
+        id = &this->particle_table[i];
+        r1 = &this->particles[id->species][id->index];
+        for (unsigned int j=i+1; j < this->num_particles; ++j)
         {
-            this->compute_differences(deltas);
+            id = &this->particle_table[j];
+            r2 = &this->particles[id->species][id->index];
+            
+            delta_r_squ = 0.0;
+            for (unsigned int c = 0; c < d; ++c) delta_r_squ += pow(r1[c]-r2[c], 2.);
+            //delta_r = sqrt(delta_r);
+            //this->compute_differences(deltas);
             //this->periodic_boundaries(deltas);
             
-            double r=norm(deltas); // calc distance
+            // double r=norm(deltas); // calc distance
             
-            if (r<rmax) //within assigned distance from reference
+            if (delta_r_squ < r_max_squ) //within assigned distance from reference
             {
-                bin = (int)(r/binwidth);
-                gr[bin] += 2;
+                bin = static_cast<unsigned int> ( sqrt(delta_r_squ)/bin_width );
+                bin_count[bin] += 2;
             }
         }
     }
     
-    for ( int i=0; i < nbins; ++i )
+    this->g = vector<double>(num_bins);
+    for ( unsigned int i=0; i < num_bins; ++i )
     {
+        this->g[i] = static_cast<double> ( bin_count[i] );
         //normalise
-        double vol=((i+1)*(i+1)*(i+1)-i*i*i)*binwidth*binwidth*binwidth; //needs to be in 3D
-        double nid=(4./3.)*M_PI*vol*this->density; //3D
-        g[i]/=nid*this->num_particles; //scale         
+        double vol=((i+1)*(i+1)*(i+1)-i*i*i)*bin_width*bin_width*bin_width; //needs to be in 3D
+        double nid=(4./3.)*M_PI*vol;//*this->number_density; //3D
+        this->g[i]/=nid*this->num_particles; //scale         
     }
+    
+    return this->g;
 }
 
