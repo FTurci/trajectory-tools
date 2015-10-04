@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
         }
         for (unsigned int bin = 0; bin < num_bins; ++bin)
         {
-            g[bin] /= num_bins;
+            g[bin] /= sequence_size;
             cout << bin*delta_r << "\t" << g[bin] << endl;
         }
         
