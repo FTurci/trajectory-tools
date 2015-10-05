@@ -279,7 +279,7 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
     //if (!this->bin_width > 0.) throw Exception(__PRETTY_FUNCTION__, ": invalid bin_width=", bin_width);
     if (this->g.size() == num_bins && this->g_bin_width == bin_width) return this->g;
     
-    const unsigned int d = 3;
+    constexpr unsigned int d = 3;
     const double r_max = num_bins*bin_width;
     const double r_max_squ = pow(r_max, 2.);
     
@@ -301,7 +301,10 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
             r2 = &this->particles[id->species][id->index];
             
             delta_r_squ = 0.0;
-            for (unsigned int c = 0; c < d; ++c) delta_r_squ += pow(r1[c]-r2[c], 2.);
+            for (unsigned int c = 0; c < d; ++c)
+            {
+                delta_r_squ += (r1[c]-r2[c])*(r1[c]-r2[c]);
+            }
             //delta_r = sqrt(delta_r);
             //this->compute_differences(deltas);
             //this->periodic_boundaries(deltas);
