@@ -6,10 +6,11 @@
 #include <string>
 
 #include "species.h"
+#include "container.h"
 
 
 // Only supports canonical configurations for now, i.e. particle number N is fixed.
-class Configuration
+class Configuration : public Container
 {
 public:
     Configuration();

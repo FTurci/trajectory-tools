@@ -11,7 +11,6 @@ using namespace std;
 
 Configuration::Configuration() : num_particles(0), g_bin_width(0.)
 {
-
 }
 
 void Configuration::read_xyz(string path)
@@ -75,6 +74,16 @@ void Configuration::read_xyz(istream& in)
         this->particles.push_back( Species<d>(positions[species_index]) );
         this->dispersity.push_back( positions[species_index].size()/d );
     }
+    
+    /*************** DEBUG ****************/
+    ParticleIndex* id;
+    id = &this->particle_table[0];
+    for (unsigned int c = 0; c < d; ++c)
+    {
+        this->boundaries[c] = this->particles[id->species][id->index][c];
+    }
+    for (unsigned int n = 0; n < this->num_particles; ++n)
+    this->boundaries[0] = 20;
 }
 
 void Configuration::read_xyz(string path, const vector<unsigned int>& species_distribution)
@@ -288,6 +297,7 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
     const double* r1;
     const double* r2;
     // Calculation variables defined here for efficiency.
+    double delta;
     double delta_r_squ;
     vector<unsigned int> bin_count(num_bins); // should automatically initialise to zeros.
     unsigned int bin;
@@ -303,7 +313,8 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
             delta_r_squ = 0.0;
             for (unsigned int c = 0; c < d; ++c)
             {
-                delta_r_squ += (r1[c]-r2[c])*(r1[c]-r2[c]);
+                delta = this->apply_boundaries(r1[c]-r2[c], c);
+                delta_r_squ += delta*delta;
             }
             //delta_r = sqrt(delta_r);
             //this->compute_differences(deltas);

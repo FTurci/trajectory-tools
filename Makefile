@@ -2,7 +2,7 @@ include Makefile.inc
 
 BINS	= neighcorr config-test
 OBJLIBS	= 
-OBJS	= trajectory.o configuration.o
+OBJS	= trajectory.o configuration.o container.o
 
 all: $(BINS) $(OBJLIBS)
 
@@ -18,8 +18,10 @@ config-test.o: config-test.cc optionparser.h trajectory.o
 
 trajectory.o: trajectory.cc trajectory.h configuration.o
 	$(COMP) trajectory.cc
-configuration.o: configuration.cc configuration.h species.h utilities.h
+configuration.o: configuration.cc configuration.h container.o species.h utilities.h
 	$(COMP) configuration.cc
+container.o: container.cc container.h
+	$(COMP) container.cc
 
 clean:
 	@rm -fv *.o *~ *.pyc $(BINS) $(OBJLIBS)
