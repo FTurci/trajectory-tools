@@ -333,12 +333,15 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
     }
     
     this->g = vector<double>(num_bins);
+
+    double number_density=this->num_particles/this-get_volume();
+
     for ( unsigned int i=0; i < num_bins; ++i )
     {
         this->g[i] = static_cast<double> ( bin_count[i] );
         //normalise
         double vol=((i+1)*(i+1)*(i+1)-i*i*i)*bin_width*bin_width*bin_width; //needs to be in 3D
-        double nid=(4./3.)*M_PI*vol;//*this->number_density; //3D
+        double nid=(4./3.)*M_PI*vol*number_density;//*this->number_density; //3D
         this->g[i]/=nid*this->num_particles; //scale         
     }
     

@@ -16,6 +16,14 @@ protected:
         else if(value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
         else return value;
     }
+    inline double get_volume(){
+        double V=1;
+        for (int i = 0; i < this->boundaries.size(); ++i)
+        {
+            V*=this->boundaries[i];
+        }
+        return V;
+    }
     std::vector<double> boundaries;
 };
 
