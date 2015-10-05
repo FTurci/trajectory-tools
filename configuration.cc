@@ -334,7 +334,7 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
     
     this->g = vector<double>(num_bins);
 
-    double number_density=this->num_particles/this-get_volume();
+    double number_density=this->num_particles/this->get_volume();
 
     for ( unsigned int i=0; i < num_bins; ++i )
     {

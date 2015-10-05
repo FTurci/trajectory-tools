@@ -18,7 +18,7 @@ protected:
     }
     inline double get_volume(){
         double V=1;
-        for (int i = 0; i < this->boundaries.size(); ++i)
+        for (unsigned int i = 0; i < this->boundaries.size(); ++i)
         {
             V*=this->boundaries[i];
         }
