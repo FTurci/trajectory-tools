@@ -55,6 +55,8 @@ public:
     void experimental_radial_distr();
     // simulation g(r)
     const std::vector<double>& radial_distribution(unsigned int num_bins, double bin_width);
+    // Cumulative forms, for taking averages efficiently etc.
+    void cumulative_radial_distribution(unsigned int num_bins, double bin_width, std::vector<double>& g_total);
     
 protected:
     // Particle data.

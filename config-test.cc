@@ -60,7 +60,7 @@ int main(int argc, char const *argv[])
         for (int i = 0; i < sequence_size; ++i)
         {
             string path = parse.nonOption(i);
-            //cout << "processing " << path << "..." << endl;
+            //cerr << "processing " << path << "...\n";
             Configuration config;
             config.read_xyz(path);
             const vector<double>& g_tmp = config.radial_distribution(num_bins, delta_r);
@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
         for (unsigned int bin = 0; bin < num_bins; ++bin)
         {
             g[bin] /= sequence_size;
-            cout << bin*delta_r << "\t" << g[bin] << endl;
+            cout << bin*delta_r << "\t" << g[bin] << "\n";
         }
         
         return EXIT_SUCCESS;

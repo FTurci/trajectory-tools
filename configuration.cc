@@ -200,7 +200,7 @@ void Configuration::read_neighbours(std::string path)
             }
             count++;
         }
-        // cout<<neighs.size()<<endl;
+        // cout<<neighs.size()<<"\n";
         this->neighbour_table.push_back(neighs);
     }
     this->num_particles=neighbour_table.size();
@@ -212,7 +212,7 @@ void Configuration::print_positions(ostream& out) const
     for (unsigned int i = 0; i < this->particles.size(); ++i)
     {
         const Species<d>& sp = this->particles[i];
-        out << "species " << i << ": " << sp.size() << " particles" << endl;
+        out << "species " << i << ": " << sp.size() << " particles\n";
         for (unsigned int n = 0; n < sp.size(); ++n)
         {
             for (unsigned int c = 0; c < d; ++c)
@@ -254,12 +254,12 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
             vector <int> common;
             set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(), b.neighbour_table[i].end(), back_inserter(common));
             
-            // std::cout<<"particle "<<i<<std::endl;
+            // std::cout<<"particle "<<i<<"\n";
             // for (int p = 0; p < common.size(); ++p)
             // {
             //     std::cout<<common[p]<<" ";
             // }
-            // std::cout<<std::endl;
+            // std::cout<<"\n";
             
             // std::cout<<"==>"<<common.size()<<" "<<neighbour_table
             sum+=common.size()/(double)neighbour_table[i].size();

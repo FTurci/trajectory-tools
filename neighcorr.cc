@@ -81,16 +81,16 @@ int main(int argc, char const *argv[])
         for (int i = 0; i < (last-first+1); ++i)
             neighbour_paths[i] = parse.nonOption(i+first-1);
         
-        //cout << "Using trajectories:" << endl;
+        //cout << "Using trajectories:\n";
         //for (int i=0; i < (last-first+1); i++)
-        //    cout << "  " << neighbour_paths[i] << endl;
+        //    cout << "  " << neighbour_paths[i] << "\n";
         Trajectory trajectory;
         
-        cout << "Reading data..." << endl;
+        cout << "Reading data...\n";
         
         trajectory.read_sequence_neighbours(neighbour_paths);
         
-        cout << "The trajectory length is " << trajectory.length() << endl;
+        cout << "The trajectory length is " << trajectory.length() << "\n";
         
         bool sorting=false;
         trajectory.compute_neighbour_correlation(sorting);

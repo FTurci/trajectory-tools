@@ -12,8 +12,8 @@ Trajectory::Trajectory()
 
 void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
 {
-    for (auto it = config_paths.begin(); it != config_paths.end(); ++it) cout << *it << endl;
-    for (auto it = neighbour_paths.begin(); it != neighbour_paths.end(); ++it) cout << *it << endl;
+    for (auto it = config_paths.begin(); it != config_paths.end(); ++it) cout << *it << "\n";
+    for (auto it = neighbour_paths.begin(); it != neighbour_paths.end(); ++it) cout << *it << "\n";
 }
 
 void Trajectory::read_sequence_neighbours(vector<string> path_list)
@@ -45,7 +45,7 @@ void Trajectory::compute_neighbour_correlation(bool sorting)
     {   
         for (unsigned int tt = t+1; tt < this->sequence.size(); ++tt)
         {
-            // std::cout<<"T "<<t<<"  TT "<<tt<<std::endl;
+            // cout<<"T "<<t<<"  TT "<<tt<< "\n";
             this->neigh_corr[tt-t]+=sequence[t].neighbour_overlap(sequence[tt],sorting);
             this->neigh_norm[tt-t]++;
         }
@@ -62,7 +62,7 @@ void Trajectory::save_neighbour_correlation(std::string filename){
 
     for (unsigned int i = 0; i < this->sequence.size(); ++i)
     {
-        fout<<i<<'\t'<<this->neigh_corr[i]<<"\t"<<this->neigh_norm[i]<<std::endl;
+        fout<<i<<'\t'<<this->neigh_corr[i]<<"\t"<<this->neigh_norm[i]<<"\n";
     }
     fout.close();
 }
