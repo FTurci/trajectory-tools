@@ -12,8 +12,8 @@ public:
 protected:
     inline double apply_boundaries(double value, unsigned int dimension)
     {
-        if(value>dimension*0.5) return value-dimension;
-        else if(value<-dimension*0.5) return value+dimension;
+        if(value > this->boundaries[dimension]*0.5) return value-this->boundaries[dimension];
+        else if(value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
         else return value;
     }
     std::vector<double> boundaries;

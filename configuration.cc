@@ -78,12 +78,14 @@ void Configuration::read_xyz(istream& in)
     /*************** DEBUG ****************/
     ParticleIndex* id;
     id = &this->particle_table[0];
-    for (unsigned int c = 0; c < d; ++c)
+    this->boundaries = vector<double>(d);
+    for (unsigned int c = 0; c < d; ++c) this->boundaries[c] = abs(this->particles[id->species](id->index,c));
+    for (unsigned int n = 1; n < this->num_particles; ++n)
     {
-        this->boundaries[c] = this->particles[id->species][id->index][c];
+        id = &this->particle_table[n];
+        for (unsigned int c = 0; c < d; ++c) this->boundaries[c] = max(this->boundaries[c], abs(this->particles[id->species](id->index,c)));
     }
-    for (unsigned int n = 0; n < this->num_particles; ++n)
-    this->boundaries[0] = 20;
+    for (unsigned int c = 0; c < d; ++c) this->boundaries[c] = this->boundaries[c]*2;
 }
 
 void Configuration::read_xyz(string path, const vector<unsigned int>& species_distribution)
@@ -215,7 +217,7 @@ void Configuration::print_positions(ostream& out) const
         {
             for (unsigned int c = 0; c < d; ++c)
                 out << "  " << sp(n,c);
-            out << endl;
+            out << "\n";
         }
     }
 }
@@ -226,7 +228,7 @@ void Configuration::print_neighbours(int first, int last) const
     {
         for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
             std::cout << this->neighbour_table[i][j] << " ";
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 
 }
@@ -237,7 +239,7 @@ void Configuration::print_neighbours() const
     {
         for (unsigned int j = 0; j < neighbour_table[i].size(); ++j)
             std::cout << this->neighbour_table[i][j] <<" ";
-        std::cout << std::endl;
+        std::cout << "\n";
     }
 }
 
