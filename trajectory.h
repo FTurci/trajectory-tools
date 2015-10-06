@@ -31,7 +31,7 @@ public:
 
 
 private:
-    std::list<Configuration> sequence;
+    std::vector<Configuration> sequence;
     std::vector<double> neigh_corr;
     std::vector<double> neigh_norm;
     std::vector<double> isf;

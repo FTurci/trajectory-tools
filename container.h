@@ -8,6 +8,7 @@ class Container
 {
 public:
     Container();
+    Container(const Container& copy);
 
 protected:
     inline double apply_boundaries(double value, unsigned int dimension)

@@ -12,7 +12,7 @@ using namespace std;
 Configuration::Configuration() : num_particles(0), particles(0), g_bin_width(0.)
 {
 }
-Configuration::Configuration(const Configuration& copy) : num_particles(copy.num_particles), particles(copy.particles), dispersity(copy.dispersity), particle_table(copy.particle_table), g(copy.g), g_bin_width(copy.g_bin_width), experimental_g(copy.experimental_g)
+Configuration::Configuration(const Configuration& copy) : Container(copy), num_particles(copy.num_particles), particles(copy.particles), dispersity(copy.dispersity), particle_table(copy.particle_table), g(copy.g), g_bin_width(copy.g_bin_width), experimental_g(copy.experimental_g)
 {
 }
 
@@ -278,6 +278,7 @@ void Configuration::read_atom(istream& in)
 
 void Configuration::read_atom(string path, const Configuration& ref_config)
 {
+
     ifstream in(path);
     if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
     this->read_atom(in, ref_config);
@@ -287,8 +288,10 @@ void Configuration::read_atom(string path, const Configuration& ref_config)
 void Configuration::read_atom(istream& in, const Configuration& ref_config)
 {
     constexpr unsigned int d = 3;
+
     
     if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
+    
     
     string line;
     double tmp;
@@ -302,12 +305,16 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
     getline(in, line);
     getline(in, line);
     this->num_particles = stoi(line);
+   
+
     if (this->num_particles != ref_config.num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to load configuration (N=", this->num_particles, ") which does not match reference configuration (N=", ref_config.num_particles, ")");
+
     this->particle_table = vector<ParticleIndex>(this->num_particles);
     
     // The next lines give the domain size (including a header line).
     getline(in, line);
     this->boundaries = vector<double>(d);
+
     for (unsigned int c = 0; c < d; ++c)
     {
         in >> tmp >> tmp;
@@ -319,7 +326,9 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
             if (ref_config.boundaries[c] != 1.0) throw Exception(__PRETTY_FUNCTION__, ": attempting to load configuration whose boundaries do not match reference configuration");
         }
     }
+    
     getline(in, line); // finish loading the rest of this line.
+    
     
     // Preallocate data types for the different species.
     this->dispersity = vector<unsigned int>(ref_config.dispersity);
@@ -336,7 +345,7 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
             this->boundaries[c] = 1.0;
         }
     }
-    
+
     // Declare all variables outside of the loop for optimisation.
     // NB: this could be unnecessary as this is not meant to be a fast function.
     unsigned int species, index;

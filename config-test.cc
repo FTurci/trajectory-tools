@@ -68,7 +68,7 @@ int main(int argc, char const *argv[])
         Trajectory my_traj;
 
         my_traj.read_atom(path);
-        my_traj.compute_msd_isf(2*M_PI);
+        my_traj.compute_msd_isf(2*M_PI/0.11);
         my_traj.save_msd_isf("msd.txt");
 
         my_traj.compute_g(num_bins,delta_r);
