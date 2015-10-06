@@ -15,6 +15,7 @@ void Trajectory::read_atom(string path){
 
     Configuration* ref_config = nullptr;
     ifstream in(path);
+    
     int countlines=0;
     string line;
 
@@ -24,7 +25,6 @@ void Trajectory::read_atom(string path){
     }
     in.close();
 
-  
     // reopen
     in.open(path);
 
@@ -142,26 +142,18 @@ void Trajectory::compute_msd_isf(double q){
 
     double dr, dr2;
 
-    // cout<<msd.size()<<" "<<msd[1].size()<<endl;
-
     for (unsigned int t=0; t<this->sequence.size()-1; ++t){
-
-   
-        
         for(unsigned int tt=t+1; tt<this->sequence.size();++tt)
         {
             sequence[t].displacement_from(sequence[tt],drsqu );
             dr2=0;
             for (unsigned int c = 0; c < d; ++c) {
                 dr2+=drsqu[c];
-                // cout<<counter_tt<<" "<<counter_t<<" "<<c<<endl;
-                // cout<<msd[counter_tt-counter_t].size()<<endl;
-                // cout<<counter_tt-counter_t<<" "<<msd.size()<<" ";
                 this->msd[tt-t][c] +=drsqu[c];
             }
 
             dr = sqrt(dr2);
-            if(dr==0) cout<<"zero "<<tt<<" "<<t<< endl;
+
             this->isf[tt-t] += sin(q*dr)/(q*dr);
 
             this->num_samples[tt-t]++;
