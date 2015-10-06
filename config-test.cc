@@ -73,37 +73,7 @@ int main(int argc, char const *argv[])
 
         my_traj.compute_g(num_bins,delta_r);
         my_traj.save_g("g.txt");
-        // list<Configuration> config_list;
-
-
-        // Configuration* ref_config = nullptr;
-        // unsigned int count = 0;
-        // for (int i = 0; i < sequence_size; ++i)
-        // {
-        //     string path = parse.nonOption(i);
-        //     cerr << "processing " << path << "..." << endl;
-        //     ifstream in(path);
-        //     // Get any other configurations in this file (i.e. in the trajectory).
-        //     while (in)
-        //     {
-        //         config_list.push_back( Configuration() );
-        //         if (ref_config) config_list.back().read_atom(in, *ref_config);
-        //         else
-        //         {
-        //             ref_config = &config_list.back();
-        //             ref_config->read_atom(in);
-        //         }
-        //         config_list.back().cumulative_radial_distribution(&g, num_bins, delta_r);
-        //         count++;
-        //         // Get the next character to trigger the eof flag if we're at the end.
-        //         in.get();
-        //     }
-        // }
-        // for (unsigned int bin = 0; bin < num_bins; ++bin)
-        // {
-        //     g[bin] /= my_traj.length();
-        //     cout << (bin+0.5)*delta_r << "\t" << g[bin] << "\n";
-        // }
+     
         
         return EXIT_SUCCESS;
     
