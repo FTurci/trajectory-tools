@@ -45,7 +45,7 @@ void Trajectory::compute_neighbour_correlation(bool sorting)
     {   
         for (unsigned int tt = t+1; tt < this->sequence.size(); ++tt)
         {
-            // cout<<"T "<<t<<"  TT "<<tt<< "\n";
+            // cout << "T " << t << "  TT " << tt << "\n";
             this->neigh_corr[tt-t]+=sequence[t].neighbour_overlap(sequence[tt],sorting);
             this->neigh_norm[tt-t]++;
         }
@@ -62,7 +62,7 @@ void Trajectory::save_neighbour_correlation(std::string filename){
 
     for (unsigned int i = 0; i < this->sequence.size(); ++i)
     {
-        fout<<i<<'\t'<<this->neigh_corr[i]<<"\t"<<this->neigh_norm[i]<<"\n";
+        fout << i << '\t' << this->neigh_corr[i] << "\t" << this->neigh_norm[i] << "\n";
     }
     fout.close();
 }

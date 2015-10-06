@@ -9,7 +9,10 @@ using namespace std;
 #include "utilities.h"
 
 
-Configuration::Configuration() : num_particles(0), g_bin_width(0.)
+Configuration::Configuration() : num_particles(0), particles(0), g_bin_width(0.)
+{
+}
+Configuration::Configuration(const Configuration& copy) : num_particles(copy.num_particles), particles(copy.particles), dispersity(copy.dispersity), particle_table(copy.particle_table), g(copy.g), g_bin_width(copy.g_bin_width), experimental_g(copy.experimental_g)
 {
 }
 
@@ -23,10 +26,10 @@ void Configuration::read_xyz(string path)
 
 void Configuration::read_xyz(istream& in)
 {
-    const int d = 3;
+    constexpr int d = 3;
     
     if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
-        
+    
     // The first line states the number of particles.
     string line;
     getline(in, line);
@@ -58,7 +61,7 @@ void Configuration::read_xyz(istream& in)
         else species_index = found->second;
         
         // Get the coordinates and add them to the list.
-        for (unsigned int c = 0; c < d; c++) in >> x[c];
+        for (unsigned int c = 0; c < d; ++c) in >> x[c];
         positions[species_index].insert(positions[species_index].end(), x, x+d);
         
         // Bookkeeping so every particle has a unique id (based on their order in the xyz file).
@@ -162,9 +165,9 @@ void Configuration::read_xyz(std::istream& in, const vector<unsigned int>& speci
         {
             species_index = index_list.size();
             index_list[species] = species_index;
-            if (index_list.size() > species_distribution.size())
+            if (index_list.size() > this->dispersity.size())
                 throw Exception(__PRETTY_FUNCTION__, ": more species found than expected",
-                                ": found (at least)=", index_list.size(), ", expected=", species_distribution.size());
+                                ": found (at least)=", index_list.size(), ", expected=", this->dispersity.size());
         }
         else species_index = found->second;
         
@@ -177,8 +180,195 @@ void Configuration::read_xyz(std::istream& in, const vector<unsigned int>& speci
         // Get the coordinates.
         for (unsigned int c = 0; c < d; c++)
             in >> this->particles[species_index]( count[species_index]-1, c );
+        
+        // Bookkeeping so every particle has a unique id (based on their order in the xyz file).
+        this->particle_table[n].species = species_index;
+        this->particle_table[n].index = count[species_index]-1;
     }
 }
+
+void Configuration::read_atom(string path)
+{
+    ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
+    this->read_atom(in);
+    in.close();
+}
+
+void Configuration::read_atom(istream& in)
+{
+    constexpr unsigned int d = 3;
+    
+    if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
+    
+    string line;
+    double tmp;
+    
+    // The first two lines give the time (including a header line).
+    getline(in, line);
+    getline(in, line);
+    //int t = stoi(line);
+    
+    // The next two give the number of atoms (including a header line).
+    getline(in, line);
+    getline(in, line);
+    this->num_particles = stoi(line);
+    this->particle_table = vector<ParticleIndex>(this->num_particles);
+    
+    // The next lines give the domain size (including a header line).
+    getline(in, line);
+    this->boundaries = vector<double>(d);
+    for (unsigned int c = 0; c < d; ++c)
+    {
+        in >> tmp >> tmp;
+        this->boundaries[c] = tmp;
+    }
+    getline(in, line); // finish loading the rest of this line.
+    
+    // Check the units for the particle positons: they may be stored in scaled units in which case we have to rescale our boundaries back to unit values.
+    getline(in, line);
+    if (line.find("s"))
+    {
+        for (unsigned int c = 0; c < d; ++c) this->boundaries[c] = 1.0;
+    }
+    
+    // Declare all variables outside of the loop for optimisation.
+    // NB: this could be unnecessary as this is not meant to be a fast function.
+    int species, index;
+    int species_index;
+    map<int, int> index_list;
+    map<int, int>::iterator found;
+    vector< vector<double> > positions;
+    double x[d];
+    // Read particle data.
+    for (unsigned int n = 0; n < this->num_particles; ++n)
+    {
+        in >> index >> species;
+        // If this is a new species then we have to add new data structures for it.
+        found = index_list.find(species);
+        if (found == index_list.end())
+        {
+            positions.push_back( vector<double>() );
+            species_index = index_list.size();
+            index_list[species] = species_index;
+        }
+        else species_index = found->second;
+        
+        // Get the coordinates and add them to the list.
+        for (unsigned int c = 0; c < d; ++c) in >> x[c];
+        positions[species_index].insert(positions[species_index].end(), x, x+d);
+        
+        // Bookkeeping so every particle has a unique id.
+        this->particle_table[index-1].species = species_index;
+        this->particle_table[index-1].index = (positions[species_index].size()/d)-1;
+    }
+    
+    // Finish off the current line (so we start at the beginning of the next configuration if there is more than one).
+    getline(in, line);
+    
+    // Save the coordinate data as static-length species, using the minimum storage space.
+    for (auto it = index_list.begin(); it != index_list.end(); ++it)
+    {
+        species_index = it->second;
+        positions[species_index].resize( positions[species_index].size() );
+        this->particles.push_back( Species<d>(positions[species_index]) );
+        this->dispersity.push_back( positions[species_index].size()/d );
+    }
+}
+
+void Configuration::read_atom(string path, const Configuration& ref_config)
+{
+    ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
+    this->read_atom(in, ref_config);
+    in.close();
+}
+
+void Configuration::read_atom(istream& in, const Configuration& ref_config)
+{
+    constexpr unsigned int d = 3;
+    
+    if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
+    
+    string line;
+    double tmp;
+    
+    // The first two lines give the time (including a header line).
+    getline(in, line);
+    getline(in, line);
+    //int t = stoi(line);
+    
+    // The next two give the number of atoms (including a header line).
+    getline(in, line);
+    getline(in, line);
+    this->num_particles = stoi(line);
+    if (this->num_particles != ref_config.num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to load configuration (N=", this->num_particles, ") which does not match reference configuration (N=", ref_config.num_particles, ")");
+    this->particle_table = vector<ParticleIndex>(this->num_particles);
+    
+    // The next lines give the domain size (including a header line).
+    getline(in, line);
+    this->boundaries = vector<double>(d);
+    for (unsigned int c = 0; c < d; ++c)
+    {
+        in >> tmp >> tmp;
+        this->boundaries[c] = tmp;
+        // If there is a mismatch between the reference boundaries and us then we have to do some further error checking.
+        if (this->boundaries[c] != ref_config.boundaries[c])
+        {
+            // The mismatch may be caused by the particles using scaled position vectors (i.e. the boundaries are the unit): we won't find out until further on in the file however.
+            if (ref_config.boundaries[c] != 1.0) throw Exception(__PRETTY_FUNCTION__, ": attempting to load configuration whose boundaries do not match reference configuration");
+        }
+    }
+    getline(in, line); // finish loading the rest of this line.
+    
+    // Preallocate data types for the different species.
+    this->dispersity = vector<unsigned int>(ref_config.dispersity);
+    for (auto it = this->dispersity.begin(); it != this->dispersity.end(); ++it)
+        this->particles.push_back( Species<d>(*it) );
+    
+    // Check the units for the particle positons: they may be stored in scaled units in which case we have to rescale our boundaries back to unit values.
+    getline(in, line);
+    if (line.find("s"))
+    {
+        for (unsigned int c = 0; c < d; ++c)
+        {
+            if (ref_config.boundaries[c] != 1.0) throw Exception(__PRETTY_FUNCTION__, ": attempting to load configuration whose boundaries do not match reference configuration");
+            this->boundaries[c] = 1.0;
+        }
+    }
+    
+    // Declare all variables outside of the loop for optimisation.
+    // NB: this could be unnecessary as this is not meant to be a fast function.
+    unsigned int species, index;
+    vector<unsigned int> count( this->dispersity.size() );
+    // Read the particle positions.
+    for (unsigned int n = 0; n < this->num_particles; ++n)
+    {
+        in >> index >> species;
+        if (species > this->dispersity.size())
+            throw Exception(__PRETTY_FUNCTION__, ": more species found than expected",
+                            ": found (at least)=", species, ", expected=", this->dispersity.size());
+        species--;
+        
+        // Check this new particle does not violate the prescribed dispersity.
+        count[species] += 1;
+        if (count[species] > this->dispersity[species])
+            throw Exception(__PRETTY_FUNCTION__, ": more particles found of species ", species, " than expected",
+                            ": found (at least)=", count[species], ", expected=", this->dispersity[species]);
+        
+        // Get the coordinates.
+        for (unsigned int c = 0; c < d; c++)
+            in >> this->particles[species]( count[species]-1, c );
+        
+        // Bookkeeping so every particle has a unique id.
+        this->particle_table[index-1].species = species;
+        this->particle_table[index-1].index = count[species]-1;
+    }
+    
+    // Finish off the current line (so we start at the beginning of the next configuration if there is more than one).
+    getline(in, line);
+}
+
 
 void Configuration::read_neighbours(std::string path)
 {
@@ -254,14 +444,14 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
             vector <int> common;
             set_intersection(this->neighbour_table[i].begin(), this->neighbour_table[i].end(), b.neighbour_table[i].begin(), b.neighbour_table[i].end(), back_inserter(common));
             
-            // std::cout<<"particle "<<i<<"\n";
+            // cout << "particle " << i << "\n";
             // for (int p = 0; p < common.size(); ++p)
             // {
-            //     std::cout<<common[p]<<" ";
+            //     cout << common[p] << " ";
             // }
-            // std::cout<<"\n";
+            // cout << "\n";
             
-            // std::cout<<"==>"<<common.size()<<" "<<neighbour_table
+            // cout << "==>" << common.size() << " " << neighbour_table;
             sum+=common.size()/(double)neighbour_table[i].size();
         }
     }
@@ -289,6 +479,23 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
     if (!num_bins) throw Exception(__PRETTY_FUNCTION__, ": invalid num_bins=", num_bins);
     //if (!this->bin_width > 0.) throw Exception(__PRETTY_FUNCTION__, ": invalid bin_width=", bin_width);
     if (this->g.size() == num_bins && this->g_bin_width == bin_width) return this->g;
+    
+    this->cumulative_radial_distribution(nullptr, num_bins, bin_width);
+    return this->g;
+}
+
+void Configuration::cumulative_radial_distribution(vector<double>* g_sum, unsigned int num_bins, double bin_width)
+{
+    if (!this->num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to compute g(r) on an empty configuration");
+    if (!num_bins) throw Exception(__PRETTY_FUNCTION__, ": invalid num_bins=", num_bins);
+    //if (!this->bin_width > 0.) throw Exception(__PRETTY_FUNCTION__, ": invalid bin_width=", bin_width);
+    if (g_sum && g_sum->size() != num_bins) throw Exception(__PRETTY_FUNCTION__, ": num_bins=", num_bins, " does not match g_sum->size()=", g_sum->size());
+    if (this->g.size() == num_bins && this->g_bin_width == bin_width)
+    {
+        for (unsigned int i = 0; i < num_bins; ++i)
+            (*g_sum)[i] += this->g[i];
+        return;
+    }
     
     constexpr unsigned int d = 3;
     const double r_max = num_bins*bin_width;
@@ -318,11 +525,6 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
                 delta = this->apply_boundaries(r1[c]-r2[c], c);
                 delta_r_squ += delta*delta;
             }
-            //delta_r = sqrt(delta_r);
-            //this->compute_differences(deltas);
-            //this->periodic_boundaries(deltas);
-            
-            // double r=norm(deltas); // calc distance
             
             if (delta_r_squ < r_max_squ) //within assigned distance from reference
             {
@@ -332,19 +534,17 @@ const vector<double>& Configuration::radial_distribution(unsigned int num_bins, 
         }
     }
     
-    this->g = vector<double>(num_bins);
-
     double number_density=this->num_particles/this->get_volume();
-
+    //cerr << this->get_volume() << endl;
+    this->g = vector<double>(num_bins);
+    
     for ( unsigned int i=0; i < num_bins; ++i )
     {
-        this->g[i] = static_cast<double> ( bin_count[i] );
         //normalise
         double vol=((i+1)*(i+1)*(i+1)-i*i*i)*bin_width*bin_width*bin_width; //needs to be in 3D
         double nid=(4./3.)*M_PI*vol*number_density;//*this->number_density; //3D
-        this->g[i]/=nid*this->num_particles; //scale         
+        g[i] = bin_count[i]/(nid*this->num_particles); //scale
+        if (g_sum) (*g_sum)[i] += g[i];
     }
-    
-    return this->g;
 }
 

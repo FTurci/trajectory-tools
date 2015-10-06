@@ -1,6 +1,8 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 using namespace std;
 
 #include "trajectory.h"
@@ -13,13 +15,14 @@ const string EXE_NAME("config-test");
 #include "optionparser.h"
 using namespace option;
 // Define the available options for the parser.
-enum  optionIndex { UNKNOWN, HELP };
+enum  optionIndex { UNKNOWN, HELP, G_DIST };
 const Descriptor usage[] =
 {
     {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: config-test [options]\n\nOptions:" },
     {HELP,    0, "h", "help",   Arg::None,     "  -h, \t--help  \tPrint usage and exit." },
+    {G_DIST,  0, "g", "g(r)",   Arg::None,     "  -g, \t--g(r)  \tCompute radial distribution function." },
     {UNKNOWN, 0, "" , ""    ,   Arg::None,     "\nExamples:\n"
-                                               "  config-test ... (need to provide examples)\n"},
+                                               "  config-test -g trajectory.atom # computes g(r) over the trajectory in the atom file\n"},
     {0,0,0,0,0,0}
 };
 
@@ -54,23 +57,37 @@ int main(int argc, char const *argv[])
         const int sequence_size = parse.nonOptionsCount();
         if (!sequence_size) throw Exception("no input paths specified");
         // Find g(r):
-        const unsigned int num_bins = 50;
-        const double delta_r = 0.1;
+        const unsigned int num_bins = 100;
+        const double delta_r = 0.005;
         vector<double> g(num_bins);
+        list<Configuration> config_list;
+        Configuration* ref_config = nullptr;
+        unsigned int count = 0;
         for (int i = 0; i < sequence_size; ++i)
         {
             string path = parse.nonOption(i);
-            //cerr << "processing " << path << "...\n";
-            Configuration config;
-            config.read_xyz(path);
-            const vector<double>& g_tmp = config.radial_distribution(num_bins, delta_r);
-            for (unsigned int bin = 0; bin < num_bins; ++bin)
-                g[bin] += g_tmp[bin];
+            cerr << "processing " << path << "..." << endl;
+            ifstream in(path);
+            // Get any other configurations in this file (i.e. in the trajectory).
+            while (in)
+            {
+                config_list.push_back( Configuration() );
+                if (ref_config) config_list.back().read_atom(in, *ref_config);
+                else
+                {
+                    ref_config = &config_list.back();
+                    ref_config->read_atom(in);
+                }
+                config_list.back().cumulative_radial_distribution(&g, num_bins, delta_r);
+                count++;
+                // Get the next character to trigger the eof flag if we're at the end.
+                in.get();
+            }
         }
         for (unsigned int bin = 0; bin < num_bins; ++bin)
         {
-            g[bin] /= sequence_size;
-            cout << bin*delta_r << "\t" << g[bin] << "\n";
+            g[bin] /= count;
+            cout << (bin+0.5)*delta_r << "\t" << g[bin] << "\n";
         }
         
         return EXIT_SUCCESS;

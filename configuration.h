@@ -14,17 +14,27 @@ class Configuration : public Container
 {
 public:
     Configuration();
+    Configuration(const Configuration& copy);
+    //Configuration(Configuration&& move) = default;
+    //Configuration& operator=(const Configuration& copy) & = default;
+    //Configuration& operator=(Configuration&& move) & = default;
     
     // 'Blind' read functions, which read position data without foreknowledge of number of particles/species etc.
     // NB: these will be a lot slower than preallocating numbers of particles in other read functions, so should only be used on the first configuration within a trajectory.
     void read_xyz(std::string path);
     void read_xyz(std::istream& in);
+    void read_atom(std::string path);
+    void read_atom(std::istream& in);
     //void read_xyzr(std::string path);
     //void read_pdb(std::string path);
     //void read_lammps(std::string path);
-    // Optimised reading utilities for when the number of particles/species are known in advance, thus avoiding potentially expensive dynamic memory allocation.
+    // Optimised reading utilities for when the configuration information is known in advance, to avoid potentially expensive dynamic memory allocation.
     void read_xyz(std::string path, const std::vector<unsigned int>& species_distribution);
     void read_xyz(std::istream& in, const std::vector<unsigned int>& species_distribution);
+    void read_atom(std::string path, const Configuration& ref_config);
+    void read_atom(std::istream& in, const Configuration& ref_config);
+    //void read_atom(std::string path, const std::vector<unsigned int>& species_distribution);
+    //void read_atom(std::istream& in, const std::vector<unsigned int>& species_distribution);
     
     //
     inline const std::vector<unsigned int>& get_dispersity() const
@@ -55,8 +65,8 @@ public:
     void experimental_radial_distr();
     // simulation g(r)
     const std::vector<double>& radial_distribution(unsigned int num_bins, double bin_width);
-    // Cumulative forms, for taking averages efficiently etc.
-    void cumulative_radial_distribution(unsigned int num_bins, double bin_width, std::vector<double>& g_total);
+    // Cumulative g(r) for computing averages.
+    void cumulative_radial_distribution(std::vector<double>* g_sum, unsigned int num_bins, double bin_width);
     
 protected:
     // Particle data.
@@ -86,7 +96,7 @@ protected:
     // number density
     //double density;
     // box sizes
-    std::vector<double> box;
+    //std::vector<double> box;
 };
 
 #endif

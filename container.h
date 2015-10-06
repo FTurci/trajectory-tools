@@ -16,7 +16,8 @@ protected:
         else if(value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
         else return value;
     }
-    inline double get_volume(){
+    inline double get_volume()
+    {
         double V=1;
         for (unsigned int i = 0; i < this->boundaries.size(); ++i)
         {
