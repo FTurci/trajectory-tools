@@ -499,7 +499,8 @@ void Configuration::cumulative_radial_distribution(vector<double>* g_sum, unsign
     
     constexpr unsigned int d = 3;
     const double r_max = num_bins*bin_width;
-    const double r_max_squ = pow(r_max, 2.);
+    const double r_max_squ = r_max*r_max;
+
     
     // Declare these to make finding particles code more legible.
     const ParticleIndex* id;
@@ -548,3 +549,28 @@ void Configuration::cumulative_radial_distribution(vector<double>* g_sum, unsign
     }
 }
 
+void Configuration::displacement_from(Configuration b, std::vector<double> &drsqu){
+    constexpr unsigned int d = 3;
+
+    if (drsqu.size()!=d) throw Exception(__PRETTY_FUNCTION__, ": squared distances mismatch");
+    const ParticleIndex* id;
+    const double* ra;
+    const double* rb;
+    double delta;
+
+    for(unsigned int i=0; i<this->num_particles; ++i){
+                id = &this->particle_table[i];
+                ra = &this->particles[id->species][id->index];
+
+                id = &b.particle_table[i];
+                rb = &b.particles[id->species][id->index];
+
+                for (unsigned int c = 0; c < d; ++c)
+                {
+                    delta = this->apply_boundaries(rb[c]-ra[c], c);
+                    drsqu[c] = delta*delta;
+                    
+                }
+            }
+
+}

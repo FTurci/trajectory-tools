@@ -10,6 +10,31 @@ Trajectory::Trajectory()
 
 }
 
+//! read a LAMMPS atom file 
+void Trajectory::read_atom(string path){
+    Configuration* ref_config = nullptr;
+    ifstream in(path);
+    // Get any other configurations in this file (i.e. in the trajectory).
+    while (in)
+    {
+
+        this->sequence.push_back( Configuration() );
+
+        if (ref_config) this->sequence.back().read_atom(in, *ref_config);
+        else
+        {
+            ref_config = &this->sequence.back();
+            // do a blind read, assigning the number of particles, the species etc.
+            ref_config->read_atom(in);
+            
+            this->num_particles=ref_config->get_n();
+        }
+        // Get the next character to trigger the eof flag if we're at the end.
+        in.get();
+    }
+
+}
+
 void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
 {
     for (auto it = config_paths.begin(); it != config_paths.end(); ++it) cout << *it << "\n";
@@ -35,26 +60,27 @@ void Trajectory::read_sequence_neighbours(vector<string> path_list)
 
 void Trajectory::print_configuration(int frame)
 {
-    this->sequence[frame].print_neighbours();
+    // this->sequence[frame].print_neighbours();
 }
 
 
 void Trajectory::compute_neighbour_correlation(bool sorting)
 {
-    for (unsigned int t = 0; t < this->sequence.size()-1; ++t)
-    {   
-        for (unsigned int tt = t+1; tt < this->sequence.size(); ++tt)
-        {
-            // cout << "T " << t << "  TT " << tt << "\n";
-            this->neigh_corr[tt-t]+=sequence[t].neighbour_overlap(sequence[tt],sorting);
-            this->neigh_norm[tt-t]++;
-        }
-    }
-    for (unsigned int i = 0; i < neigh_corr.size(); ++i)
-    {
-        this->neigh_corr[i]/=neigh_norm[i];
-    }
-   this->neigh_corr[0]=1;
+    // TO DO: TO SPEED UP USING ITERATORS!!!!!!!
+   //  for (unsigned int t = 0; t < this->sequence.size()-1; ++t)
+   //  {   
+   //      for (unsigned int tt = t+1; tt < this->sequence.size(); ++tt)
+   //      {
+            
+   //          this->neigh_corr[tt-t]+=sequence[t].neighbour_overlap(sequence[tt],sorting);
+   //          this->neigh_norm[tt-t]++;
+   //      }
+   //  }
+   //  for (unsigned int i = 0; i < neigh_corr.size(); ++i)
+   //  {
+   //      this->neigh_corr[i]/=neigh_norm[i];
+   //  }
+   // this->neigh_corr[0]=1;
  }
 
 void Trajectory::save_neighbour_correlation(std::string filename){
@@ -67,7 +93,95 @@ void Trajectory::save_neighbour_correlation(std::string filename){
     fout.close();
 }
 
-int Trajectory::length(){
-    return this->sequence.size();
+void Trajectory::compute_msd_isf(double q){
+    constexpr int d = 3;
+
+    this->isf.resize(this->length());
+    this->num_samples.resize(this->length());
+    this->msd.resize(this->length());
+    
+    for (int t = 0; t < this->length(); ++t) msd[t].resize(d);
+
+    for(int t=0; t<this->length(); ++t){ 
+        this->isf[t]=0;
+        this->num_samples[t]=0;
+        for (unsigned int c = 0; c < d; ++c) this->msd[t][c]=0;
+    }
+
+    std::vector<double> drsqu(d);
+
+    int   counter_t=0;
+    double dr, dr2;
+    
+    for (auto t=this->sequence.begin(); t!=--this->sequence.end(); ++t){
+
+        int counter_tt=counter_t;
+        counter_t++;
+        for(auto tt=t; tt!=this->sequence.end();++tt)
+        {
+
+            t->displacement_from(*tt,drsqu );
+
+            dr2=0;
+            for (unsigned int c = 0; c < d; ++c) {
+                dr2+=drsqu[c];
+                // this->msd[counter_tt-counter_t][c]+=drsqu[c];
+            }
+
+            dr = sqrt(dr2);
+            this->isf[counter_tt-counter_t] += sin(q*dr)/(q*dr);
+
+            this->num_samples[counter_tt-counter_t]++;
+
+
+            counter_tt++;
+
+            } 
+                
+    }
+    
+    // normalise
+
+    for(int t=0; t<this->length(); ++t){
+        if(num_samples[t]>0){
+            for (unsigned int c = 0; c < d; ++c) this->msd[t][c]/=(double) num_samples[t];
+            this->isf[t] /= (double) num_samples[t];
+      }
+    }
+
+}
+void Trajectory::save_msd_isf(std::string filename){
+    constexpr int d = 3;
+    
+    std::ofstream fout(filename);
+
+    for (unsigned int i = 0; i < this->sequence.size(); ++i)
+    {
+        fout << i << '\t';
+        for (unsigned int c = 0; c < d; ++c) fout << this->msd[i][c] << "\t" ;
+        fout<< this->isf[i] << "\t"<< num_samples[i]<<"\n";
+
+    }
+    fout.close();
+
 }
 
+void Trajectory::compute_g(int num_bins, double delta_r){
+    this->g.resize(num_bins);
+    this->delta_bin=delta_r;
+    for (auto t=this->sequence.begin(); t!=this->sequence.end(); ++t)
+        (*t).cumulative_radial_distribution(&this->g, num_bins, delta_r);
+}
+void Trajectory::save_g(std::string filename){
+
+    std::ofstream fout(filename);
+
+    for (unsigned int bin = 0; bin < this->g.size(); ++bin)
+    {
+        g[bin] /= this->length();
+        fout << (bin+0.5)*this->delta_bin << "\t" << g[bin] << "\n";
+    }
+
+    fout.close();
+
+}

@@ -55,42 +55,59 @@ int main(int argc, char const *argv[])
         
         // Make sure we've been given a trajectory.
         const int sequence_size = parse.nonOptionsCount();
+
+        cout<<sequence_size<<endl;
         if (!sequence_size) throw Exception("no input paths specified");
         // Find g(r):
         const unsigned int num_bins = 100;
         const double delta_r = 0.005;
-        vector<double> g(num_bins);
-        list<Configuration> config_list;
-        Configuration* ref_config = nullptr;
-        unsigned int count = 0;
-        for (int i = 0; i < sequence_size; ++i)
-        {
-            string path = parse.nonOption(i);
-            cerr << "processing " << path << "..." << endl;
-            ifstream in(path);
-            // Get any other configurations in this file (i.e. in the trajectory).
-            while (in)
-            {
-                config_list.push_back( Configuration() );
-                if (ref_config) config_list.back().read_atom(in, *ref_config);
-                else
-                {
-                    ref_config = &config_list.back();
-                    ref_config->read_atom(in);
-                }
-                config_list.back().cumulative_radial_distribution(&g, num_bins, delta_r);
-                count++;
-                // Get the next character to trigger the eof flag if we're at the end.
-                in.get();
-            }
-        }
-        for (unsigned int bin = 0; bin < num_bins; ++bin)
-        {
-            g[bin] /= count;
-            cout << (bin+0.5)*delta_r << "\t" << g[bin] << "\n";
-        }
+   
+
+        string path = parse.nonOption(0);
+        cout<<path<<endl;
+        Trajectory my_traj;
+
+        my_traj.read_atom(path);
+        my_traj.compute_msd_isf(2*M_PI);
+        my_traj.save_msd_isf("msd.txt");
+
+        my_traj.compute_g(num_bins,delta_r);
+        my_traj.save_g("g.txt");
+        // list<Configuration> config_list;
+
+
+        // Configuration* ref_config = nullptr;
+        // unsigned int count = 0;
+        // for (int i = 0; i < sequence_size; ++i)
+        // {
+        //     string path = parse.nonOption(i);
+        //     cerr << "processing " << path << "..." << endl;
+        //     ifstream in(path);
+        //     // Get any other configurations in this file (i.e. in the trajectory).
+        //     while (in)
+        //     {
+        //         config_list.push_back( Configuration() );
+        //         if (ref_config) config_list.back().read_atom(in, *ref_config);
+        //         else
+        //         {
+        //             ref_config = &config_list.back();
+        //             ref_config->read_atom(in);
+        //         }
+        //         config_list.back().cumulative_radial_distribution(&g, num_bins, delta_r);
+        //         count++;
+        //         // Get the next character to trigger the eof flag if we're at the end.
+        //         in.get();
+        //     }
+        // }
+        // for (unsigned int bin = 0; bin < num_bins; ++bin)
+        // {
+        //     g[bin] /= my_traj.length();
+        //     cout << (bin+0.5)*delta_r << "\t" << g[bin] << "\n";
+        // }
         
         return EXIT_SUCCESS;
+    
+
     }
     catch (Exception& e)
     {
