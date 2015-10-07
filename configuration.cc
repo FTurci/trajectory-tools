@@ -507,6 +507,7 @@ void Configuration::cumulative_radial_distribution(vector<double>& g_total, doub
     double delta_r_squ;
     vector<unsigned int> bin_count(num_bins); // should automatically initialise to zeros.
     unsigned int bin;
+
     for (unsigned int i = 0; i < (this->num_particles-1); ++i)
     {
         id = &this->particle_table[i];
@@ -552,21 +553,22 @@ void Configuration::cumulative_msd_isf(vector<double>& msd_isf_total, const Conf
 {
     constexpr unsigned int d = 3;
     
-    const ParticleIndex* id;
+    const ParticleIndex* lookup;
     const double* ra;
     const double* rb;
     double delta;
     
     double dr;
     vector<double> dr_squ(d);
-    
+
     for (unsigned int i = 0; i < this->num_particles; ++i)
-    {
-        id = &this->particle_table[i];
-        ra = &this->particles[id->species][id->index];
+    {   
+
+        lookup = &this->particle_table[i];
+        ra = &this->particles[lookup->species][lookup->index];
         
-        id = &b.particle_table[i];
-        rb = &b.particles[id->species][id->index];
+        lookup = &b.particle_table[i];
+        rb = &b.particles[lookup->species][lookup->index];
         
         dr = 0.;
         for (unsigned int c = 0; c < d; ++c)

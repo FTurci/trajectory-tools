@@ -139,7 +139,7 @@ void Trajectory::compute_msd_isf(double q)
         for (unsigned int tt = t+1; tt < this->sequence_length(); ++tt)
         {
             this->sequence[t].cumulative_msd_isf(msd_isf_table[tt-t], sequence[tt], q);
-            this->num_samples[tt-t]++;
+            this->num_samples[tt-t]+=this->num_particles;
         }
     }
     
