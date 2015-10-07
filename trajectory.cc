@@ -133,23 +133,12 @@ void Trajectory::compute_msd_isf(double q)
         for (unsigned int c = 0; c < d; ++c) this->msd[t][c]=0;
     }
     
-    std::vector<double> drsqu(d);
-    
-    double dr, dr2;
+    vector< vector<double> > msd_isf_table( this->sequence_length(), vector<double>(d+1) );
     for (unsigned int t = 0; t < this->sequence_length()-1; ++t)
     {
         for (unsigned int tt = t+1; tt < this->sequence_length(); ++tt)
         {
-            sequence[t].displacement_from(sequence[tt], drsqu);
-            dr2=0;
-            for (unsigned int c = 0; c < d; ++c)
-            {
-                dr2+=drsqu[c];
-                this->msd[tt-t][c] +=drsqu[c];
-            }
-            
-            dr = sqrt(dr2);
-            this->isf[tt-t] += sin(q*dr)/(q*dr);
+            this->sequence[t].cumulative_msd_isf(msd_isf_table[tt-t], sequence[tt], q);
             this->num_samples[tt-t]++;
         }
     }
@@ -159,8 +148,8 @@ void Trajectory::compute_msd_isf(double q)
     {
         if (num_samples[t]>0)
         {
-            for (unsigned int c = 0; c < d; ++c) this->msd[t][c]/=(double) num_samples[t];
-            this->isf[t] /= (double) num_samples[t];
+            for (unsigned int c = 0; c < d; ++c) this->msd[t][c] = msd_isf_table[t][c]/num_samples[t];
+            this->isf[t] = msd_isf_table[t][d]/num_samples[t];
       }
     }
 }

@@ -435,7 +435,7 @@ void Configuration::print_neighbours() const
 
 // compute the average value of the intersection between
 // the list of neighbours of two configurations
-double Configuration::neighbour_overlap(Configuration b, bool sorting){
+double Configuration::neighbour_overlap(Configuration& b, bool sorting){
     double sum=0;
     if (sorting==false)
     {
@@ -473,7 +473,7 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     return sum/this->num_particles;
 }
 
-vector<double> Configuration::radial_distribution(unsigned int num_bins, double bin_width)
+vector<double> Configuration::radial_distribution(unsigned int num_bins, double bin_width) const
 {
     if (!this->num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to compute g(r) on an empty configuration");
     if (!num_bins) throw Exception(__PRETTY_FUNCTION__, ": invalid num_bins=", num_bins);
@@ -484,7 +484,7 @@ vector<double> Configuration::radial_distribution(unsigned int num_bins, double 
     return g;
 }
 
-void Configuration::cumulative_radial_distribution(vector<double>& g_total, double bin_width)
+void Configuration::cumulative_radial_distribution(vector<double>& g_total, double bin_width) const
 {
     constexpr unsigned int d = 3;
     const unsigned int num_bins = g_total.size();
@@ -540,15 +540,25 @@ void Configuration::cumulative_radial_distribution(vector<double>& g_total, doub
     }
 }
 
-void Configuration::displacement_from(Configuration b, std::vector<double>& drsqu)
+vector<double> Configuration::msd_isf(const Configuration& b, const double q) const
+{
+    constexpr unsigned int d = 3;
+    vector<double> msd_isf(d+1);
+    this->cumulative_msd_isf(msd_isf, b, q);
+    return msd_isf;
+}
+
+void Configuration::cumulative_msd_isf(vector<double>& msd_isf_total, const Configuration& b, const double q) const
 {
     constexpr unsigned int d = 3;
     
-    if (drsqu.size() != d) throw Exception(__PRETTY_FUNCTION__, ": squared distances mismatch");
     const ParticleIndex* id;
     const double* ra;
     const double* rb;
     double delta;
+    
+    double dr;
+    vector<double> dr_squ(d);
     
     for (unsigned int i = 0; i < this->num_particles; ++i)
     {
@@ -558,10 +568,15 @@ void Configuration::displacement_from(Configuration b, std::vector<double>& drsq
         id = &b.particle_table[i];
         rb = &b.particles[id->species][id->index];
         
+        dr = 0.;
         for (unsigned int c = 0; c < d; ++c)
         {
             delta = this->apply_boundaries(rb[c]-ra[c], c);
-            drsqu[c] = delta*delta;
-        }
+            dr_squ[c] = delta*delta;
+            dr += dr_squ[c];
+            msd_isf_total[c] += dr_squ[c];
+        }        
+        dr = sqrt(dr);
+        msd_isf_total[d] += sin(q*dr)/(q*dr);
     }
 }

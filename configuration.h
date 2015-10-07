@@ -64,15 +64,16 @@ public:
     
     // Pair correlations:
     // compute the average overlap between the lists of neighbours
-    double neighbour_overlap(Configuration b, bool sorting=false);
+    double neighbour_overlap(Configuration& b, bool sorting=false);
     
-    void displacement_from(Configuration b, std::vector<double>& drsqu);
+    std::vector<double> msd_isf(const Configuration& b, const double q) const;
+    void cumulative_msd_isf(std::vector<double>& msd_isf_total, const Configuration& b, const double q) const;
     // exmperimental g(r)
-    void experimental_radial_distr();
+    void experimental_radial_distr() const;
     // simulation g(r)
-    std::vector<double> radial_distribution(unsigned int num_bins, double bin_width);
+    std::vector<double> radial_distribution(unsigned int num_bins, double bin_width) const;
     // Cumulative g(r) for computing averages.
-    void cumulative_radial_distribution(std::vector<double>& g_total, double bin_width);
+    void cumulative_radial_distribution(std::vector<double>& g_total, double bin_width) const;
     
 protected:
     // Particle data.

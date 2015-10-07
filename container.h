@@ -11,13 +11,13 @@ public:
     Container(const Container& copy);
 
 protected:
-    inline double apply_boundaries(double value, unsigned int dimension)
+    inline double apply_boundaries(double value, unsigned int dimension) const
     {
         if(value > this->boundaries[dimension]*0.5) return value-this->boundaries[dimension];
         else if(value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
         else return value;
     }
-    inline double get_volume()
+    inline double get_volume() const
     {
         double V=1;
         for (unsigned int i = 0; i < this->boundaries.size(); ++i)
