@@ -10,26 +10,31 @@ class Trajectory
 {
 public:
     Trajectory();
-   
+    
     void read_atom(std::string path);
     void read_sequence(std::vector<std::string> config_paths,
                        std::vector<std::string> neighbour_paths=std::vector<std::string>());
     void read_sequence_neighbours(std::vector<std::string> neighbour_paths);
-    void print_configuration(int frame);
-
+    void print_configuration(unsigned int frame);
+    
     void compute_msd_isf(double q);
     void save_msd_isf(std::string);
-
+    
     void compute_g(unsigned int num_bins, double delta_r);
     void save_g(std::string);
     
     void compute_neighbour_correlation(bool sorting);
     void save_neighbour_correlation(std::string);
     
-
-    inline int length(){return this->sequence.size();};
-
-
+    inline unsigned int system_size()
+    {
+        return this->num_particles;
+    }
+    inline unsigned int sequence_length()
+    {
+        return this->sequence.size();
+    }
+    
 private:
     std::vector<Configuration> sequence;
     std::vector<double> neigh_corr;
@@ -39,7 +44,7 @@ private:
     std::vector<int> num_samples;
     std::vector<double> g;
 
-    int num_particles;
+    unsigned int num_particles;
     double delta_bin;
 
     /* data */

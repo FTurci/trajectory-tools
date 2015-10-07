@@ -11,8 +11,11 @@ Trajectory::Trajectory()
 }
 
 //! read a LAMMPS atom file 
-void Trajectory::read_atom(string path){
-
+void Trajectory::read_atom(string path)
+{
+    constexpr unsigned int d = 3;
+    constexpr unsigned int ATOM_HEADER_SIZE = 6+d;
+    
     Configuration* ref_config = nullptr;
     ifstream in(path);
     
@@ -33,33 +36,24 @@ void Trajectory::read_atom(string path){
     int counter=0;
     while (in)
     {
-             // 
-        if (ref_config) {
-         
-            this->sequence[counter].read_atom(in, *ref_config);
-
-        }
+        if (ref_config) this->sequence[counter].read_atom(in, *ref_config);
         else
         {   
-            // do a blind read, assigning the number of particles, the species etc.
-            this->sequence[0].read_atom(in);
-            cout<<"The system has "<<this->sequence[0].get_n()<<" particles.\n";
+            // Do a blind read, assigning the number of particles, the species etc.
+            this->sequence[counter].read_atom(in);
             
-            this->num_particles=this->sequence[0].get_n();
-            // the header has 9 lines....
-            int num_frames=countlines/(this->num_particles+9);
-            cout<<"The system has "<<num_frames<<" frames.\n";
-
+            this->num_particles = this->sequence[counter].system_size();
+            unsigned int num_frames = countlines/(this->num_particles+ATOM_HEADER_SIZE);
             this->sequence.resize(num_frames);
             ref_config = &this->sequence[counter];
-           
         }
+        
         // Get the next character to trigger the eof flag if we're at the end.
         counter++;
         in.get();
     }
+    
     in.close();
-    cout<<"Reading completed.\n";
 }
 
 void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
@@ -85,14 +79,16 @@ void Trajectory::read_sequence_neighbours(vector<string> path_list)
     this->neigh_norm.resize(sequence.size());
 }
 
-void Trajectory::print_configuration(int frame)
+void Trajectory::print_configuration(unsigned int frame)
 {
+    cerr << frame << endl;
     // this->sequence[frame].print_neighbours();
 }
 
 
 void Trajectory::compute_neighbour_correlation(bool sorting)
 {
+    cerr << sorting << endl;
     // TO DO: TO SPEED UP USING ITERATORS!!!!!!!
    //  for (unsigned int t = 0; t < this->sequence.size()-1; ++t)
    //  {   
@@ -120,52 +116,46 @@ void Trajectory::save_neighbour_correlation(std::string filename){
     fout.close();
 }
 
-void Trajectory::compute_msd_isf(double q){
-
-    std::cout<<"Computing the ISF \n";
-    constexpr int d = 3;
-
-    this->isf.resize(this->length());
-    this->num_samples.resize(this->length());
-    this->msd.resize(this->length());
+void Trajectory::compute_msd_isf(double q)
+{
+    constexpr unsigned int d = 3;
     
-    for (int t = 0; t < this->length(); ++t) (msd[t]).resize(d);
-
-    for(int t=0; t<this->length(); ++t){ 
+    this->isf.resize(this->sequence_length());
+    this->num_samples.resize(this->sequence_length());
+    this->msd.resize(this->sequence_length());
+    
+    for (unsigned int t = 0; t < this->sequence_length(); ++t) (msd[t]).resize(d);
+    
+    for (unsigned int t = 0; t < this->sequence_length(); ++t)
+    {
         this->isf[t]=0;
         this->num_samples[t]=0;
         for (unsigned int c = 0; c < d; ++c) this->msd[t][c]=0;
     }
-
+    
     std::vector<double> drsqu(d);
-
-
+    
     double dr, dr2;
-
-    for (unsigned int t=0; t<this->sequence.size()-1; ++t){
-        for(unsigned int tt=t+1; tt<this->sequence.size();++tt)
+    for (unsigned int t = 0; t < this->sequence_length()-1; ++t)
+    {
+        for (unsigned int tt = t+1; tt < this->sequence_length(); ++tt)
         {
-            sequence[t].displacement_from(sequence[tt],drsqu );
+            sequence[t].displacement_from(sequence[tt], drsqu);
             dr2=0;
-            for (unsigned int c = 0; c < d; ++c) {
+            for (unsigned int c = 0; c < d; ++c)
+            {
                 dr2+=drsqu[c];
                 this->msd[tt-t][c] +=drsqu[c];
             }
-
+            
             dr = sqrt(dr2);
-
             this->isf[tt-t] += sin(q*dr)/(q*dr);
-
             this->num_samples[tt-t]++;
-
-            } 
-      
-                
+        }
     }
     
     // normalise
-
-    for (unsigned int t=0; t<this->length(); ++t)
+    for (unsigned int t=0; t < this->sequence_length(); ++t)
     {
         if (num_samples[t]>0)
         {
@@ -179,9 +169,9 @@ void Trajectory::save_msd_isf(string path)
 {
     constexpr int d = 3;
     
-    std::ofstream fout(path);
+    ofstream fout(path);
     // skip the 0th lag-time
-    for (unsigned int i = 1; i < this->sequence.size(); ++i)
+    for (unsigned int i = 1; i < this->sequence_length(); ++i)
     {
         fout << i << '\t';
         for (unsigned int c = 0; c < d; ++c) fout << this->msd[i][c] << "\t";
@@ -205,9 +195,10 @@ void Trajectory::save_g(std::string filename)
     
     for (unsigned int bin = 0; bin < this->g.size(); ++bin)
     {
-        g[bin] /= this->length();
+        g[bin] /= this->sequence_length();
         fout << (bin+0.5)*this->delta_bin << "\t" << g[bin] << "\n";
     }
     
     fout.close();
 }
+

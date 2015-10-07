@@ -60,18 +60,20 @@ int main(int argc, char const *argv[])
         
         string path = parse.nonOption(0);
         cerr << "Reading trajectory in " << path << "..." << endl;
-        Trajectory my_traj;
-        my_traj.read_atom(path);
+        Trajectory trajectory;
+        trajectory.read_atom(path);
+        cerr << "System has " << trajectory.system_size() << " particles." << endl;
+        cerr << "Trajectory contains " << trajectory.sequence_length() << " frames." << endl;
         
         cerr << "Computing ISF..." << endl;
-        my_traj.compute_msd_isf(2*M_PI/0.11);
-        my_traj.save_msd_isf("msd.txt");
+        trajectory.compute_msd_isf(2*M_PI/0.11);
+        trajectory.save_msd_isf("msd.txt");
         
         cerr << "Computing g(r)..." << endl;
         const unsigned int num_bins = 100;
         const double delta_r = 0.005;
-        my_traj.compute_g(num_bins,delta_r);
-        my_traj.save_g("g.txt");
+        trajectory.compute_g(num_bins,delta_r);
+        trajectory.save_g("g.txt");
         
         return EXIT_SUCCESS;
     }

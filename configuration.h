@@ -41,7 +41,10 @@ public:
     {
         return this->dispersity;
     }
-    inline  int get_n()  {return this->num_particles;}
+    inline unsigned int system_size()
+    {
+        return this->num_particles;
+    }
     
     void read_neighbours(std::string path);
     // apply periodic boundaries to values
@@ -62,8 +65,8 @@ public:
     // Pair correlations:
     // compute the average overlap between the lists of neighbours
     double neighbour_overlap(Configuration b, bool sorting=false);
-
-    void displacement_from(Configuration b, std::vector<double> &drsqu);
+    
+    void displacement_from(Configuration b, std::vector<double>& drsqu);
     // exmperimental g(r)
     void experimental_radial_distr();
     // simulation g(r)

@@ -90,7 +90,7 @@ int main(int argc, char const *argv[])
         
         trajectory.read_sequence_neighbours(neighbour_paths);
         
-        cout << "The trajectory length is " << trajectory.length() << "\n";
+        cout << "The trajectory length is " << trajectory.sequence_length() << "\n";
         
         bool sorting=false;
         trajectory.compute_neighbour_correlation(sorting);
