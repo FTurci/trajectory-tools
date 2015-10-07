@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>  
+#include <sstream>
 #include <algorithm>
 #include <map>
 using namespace std;
@@ -373,10 +373,10 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
 void Configuration::read_neighbours(std::string path)
 {
     std::ifstream file(path);
-    if(!file.good()) std::cerr << "ERROR: the file " << path << " does not exist\n Forced exit.\n";
+    if (!file.good()) std::cerr << "ERROR: the file " << path << " does not exist\n Forced exit.\n";
     std::vector< std::vector<int> >table;
     for (std::string line; std::getline(file, line); )
-    {   
+    {
         std::stringstream stream;
         stream.str(line);
         
@@ -384,7 +384,7 @@ void Configuration::read_neighbours(std::string path)
         std::vector<int> neighs;
         for (std::string s; std::getline(stream, s,' '); ){
             // skip the first element
-            if(count>0) 
+            if (count > 0)
             {
                 neighs.push_back(StringToNum<int>(s));
             }
@@ -562,8 +562,7 @@ void Configuration::cumulative_msd_isf(vector<double>& msd_isf_total, const Conf
     vector<double> dr_squ(d);
 
     for (unsigned int i = 0; i < this->num_particles; ++i)
-    {   
-
+    {
         lookup = &this->particle_table[i];
         ra = &this->particles[lookup->species][lookup->index];
         
@@ -577,8 +576,9 @@ void Configuration::cumulative_msd_isf(vector<double>& msd_isf_total, const Conf
             dr_squ[c] = delta*delta;
             dr += dr_squ[c];
             msd_isf_total[c] += dr_squ[c];
-        }        
+        }
         dr = sqrt(dr);
         msd_isf_total[d] += sin(q*dr)/(q*dr);
     }
 }
+

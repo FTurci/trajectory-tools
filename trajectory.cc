@@ -10,42 +10,41 @@ Trajectory::Trajectory()
 
 }
 
-//! read a LAMMPS atom file 
+//! read a LAMMPS atom file
 void Trajectory::read_atom(string path)
 {
     constexpr unsigned int d = 3;
     constexpr unsigned int ATOM_HEADER_SIZE = 6+d;
     
-    Configuration* ref_config = nullptr;
+    // Count how many lines there are, so after reading the first configuration we know how many frames there are in this trajectory.
     ifstream in(path);
-    
-    int countlines=0;
+    unsigned long num_lines = 0;
     string line;
-
-    while(in.good()){
-        getline(in,line);
-        countlines++;
+    while(in)
+    {
+        getline(in, line);
+        num_lines++;
     }
     in.close();
-
-    // reopen
+    
+    // Open for reading this time.
     in.open(path);
-
+    
     // Get any other configurations in this file (i.e. in the trajectory).
-    this->sequence.push_back( Configuration() );
-    int counter=0;
+    Configuration ref_config;
+    unsigned int counter = 0;
     while (in)
     {
-        if (ref_config) this->sequence[counter].read_atom(in, *ref_config);
+        if (counter) this->sequence[counter].read_atom(in, *ref_config);
         else
-        {   
+        {
             // Do a blind read, assigning the number of particles, the species etc.
-            this->sequence[counter].read_atom(in);
-            
-            this->num_particles = this->sequence[counter].system_size();
+            ref_config.read_atom(in);
+            this->num_particles = ref_config.system_size();
+            // Create space for the rest of the trajectory.
             unsigned int num_frames = countlines/(this->num_particles+ATOM_HEADER_SIZE);
-            this->sequence.resize(num_frames);
-            ref_config = &this->sequence[counter];
+            this->sequence = vector<Configuration>(num_frames);
+            this->sequence[counter] = Configuration(ref_config);
         }
         
         // Get the next character to trigger the eof flag if we're at the end.
@@ -85,16 +84,14 @@ void Trajectory::print_configuration(unsigned int frame)
     // this->sequence[frame].print_neighbours();
 }
 
-
 void Trajectory::compute_neighbour_correlation(bool sorting)
 {
     cerr << sorting << endl;
     // TO DO: TO SPEED UP USING ITERATORS!!!!!!!
    //  for (unsigned int t = 0; t < this->sequence.size()-1; ++t)
-   //  {   
+   //  {
    //      for (unsigned int tt = t+1; tt < this->sequence.size(); ++tt)
    //      {
-            
    //          this->neigh_corr[tt-t]+=sequence[t].neighbour_overlap(sequence[tt],sorting);
    //          this->neigh_norm[tt-t]++;
    //      }
@@ -104,11 +101,11 @@ void Trajectory::compute_neighbour_correlation(bool sorting)
    //      this->neigh_corr[i]/=neigh_norm[i];
    //  }
    // this->neigh_corr[0]=1;
- }
+}
 
 void Trajectory::save_neighbour_correlation(std::string filename){
     std::ofstream fout(filename);
-
+    
     for (unsigned int i = 0; i < this->sequence.size(); ++i)
     {
         fout << i << '\t' << this->neigh_corr[i] << "\t" << this->neigh_norm[i] << "\n";
@@ -144,9 +141,9 @@ void Trajectory::compute_msd_isf(double q)
     }
     
     // normalise
-    for (unsigned int t=0; t < this->sequence_length(); ++t)
+    for (unsigned int t = 0; t < this->sequence_length(); ++t)
     {
-        if (num_samples[t]>0)
+        if (num_samples[t] > 0)
         {
             for (unsigned int c = 0; c < d; ++c) this->msd[t][c] = msd_isf_table[t][c]/num_samples[t];
             this->isf[t] = msd_isf_table[t][d]/num_samples[t];
@@ -174,7 +171,7 @@ void Trajectory::compute_g(unsigned int num_bins, double delta_r)
 {
     this->g.resize(num_bins);
     this->delta_bin=delta_r;
-    for (auto t=this->sequence.begin(); t!=this->sequence.end(); ++t)
+    for (auto t = this->sequence.begin(); t != this->sequence.end(); ++t)
         (*t).cumulative_radial_distribution(this->g, delta_r);
 }
 
