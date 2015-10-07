@@ -9,10 +9,11 @@ using namespace std;
 #include "utilities.h"
 
 
-Configuration::Configuration() : num_particles(0), particles(0), g_bin_width(0.)
+Configuration::Configuration() : num_particles(0), particles(0)
 {
 }
-Configuration::Configuration(const Configuration& copy) : Container(copy), num_particles(copy.num_particles), particles(copy.particles), dispersity(copy.dispersity), particle_table(copy.particle_table), g(copy.g), g_bin_width(copy.g_bin_width), experimental_g(copy.experimental_g)
+
+Configuration::Configuration(const Configuration& copy) : Container(copy), num_particles(copy.num_particles), particles(copy.particles), dispersity(copy.dispersity), particle_table(copy.particle_table)
 {
 }
 
@@ -227,10 +228,7 @@ void Configuration::read_atom(istream& in)
     
     // Check the units for the particle positons: they may be stored in scaled units in which case we have to rescale our boundaries back to unit values.
     getline(in, line);
-    if (line.find("s"))
-    {
-        for (unsigned int c = 0; c < d; ++c) this->boundaries[c] = 1.0;
-    }
+    if (line.find("s")) for (unsigned int c = 0; c < d; ++c) this->boundaries[c] = 1.0;
     
     // Declare all variables outside of the loop for optimisation.
     // NB: this could be unnecessary as this is not meant to be a fast function.
@@ -278,7 +276,6 @@ void Configuration::read_atom(istream& in)
 
 void Configuration::read_atom(string path, const Configuration& ref_config)
 {
-
     ifstream in(path);
     if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path);
     this->read_atom(in, ref_config);
@@ -288,10 +285,8 @@ void Configuration::read_atom(string path, const Configuration& ref_config)
 void Configuration::read_atom(istream& in, const Configuration& ref_config)
 {
     constexpr unsigned int d = 3;
-
     
     if (this->particles.size()) throw Exception(__PRETTY_FUNCTION__, ": attempting to load new configuration into a preexisting configuration");
-    
     
     string line;
     double tmp;
@@ -305,16 +300,15 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
     getline(in, line);
     getline(in, line);
     this->num_particles = stoi(line);
-   
-
+    
     if (this->num_particles != ref_config.num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to load configuration (N=", this->num_particles, ") which does not match reference configuration (N=", ref_config.num_particles, ")");
-
+    
     this->particle_table = vector<ParticleIndex>(this->num_particles);
     
     // The next lines give the domain size (including a header line).
     getline(in, line);
     this->boundaries = vector<double>(d);
-
+    
     for (unsigned int c = 0; c < d; ++c)
     {
         in >> tmp >> tmp;
@@ -328,7 +322,6 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
     }
     
     getline(in, line); // finish loading the rest of this line.
-    
     
     // Preallocate data types for the different species.
     this->dispersity = vector<unsigned int>(ref_config.dispersity);
@@ -345,9 +338,8 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
             this->boundaries[c] = 1.0;
         }
     }
-
+    
     // Declare all variables outside of the loop for optimisation.
-    // NB: this could be unnecessary as this is not meant to be a fast function.
     unsigned int species, index;
     vector<unsigned int> count( this->dispersity.size() );
     // Read the particle positions.
@@ -366,8 +358,7 @@ void Configuration::read_atom(istream& in, const Configuration& ref_config)
                             ": found (at least)=", count[species], ", expected=", this->dispersity[species]);
         
         // Get the coordinates.
-        for (unsigned int c = 0; c < d; c++)
-            in >> this->particles[species]( count[species]-1, c );
+        for (unsigned int c = 0; c < d; c++) in >> this->particles[species]( count[species]-1, c );
         
         // Bookkeeping so every particle has a unique id.
         this->particle_table[index-1].species = species;
@@ -482,36 +473,32 @@ double Configuration::neighbour_overlap(Configuration b, bool sorting){
     return sum/this->num_particles;
 }
 
-const vector<double>& Configuration::radial_distribution(unsigned int num_bins, double bin_width)
+vector<double> Configuration::radial_distribution(unsigned int num_bins, double bin_width)
 {
     if (!this->num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to compute g(r) on an empty configuration");
     if (!num_bins) throw Exception(__PRETTY_FUNCTION__, ": invalid num_bins=", num_bins);
     //if (!this->bin_width > 0.) throw Exception(__PRETTY_FUNCTION__, ": invalid bin_width=", bin_width);
-    if (this->g.size() == num_bins && this->g_bin_width == bin_width) return this->g;
     
-    this->cumulative_radial_distribution(nullptr, num_bins, bin_width);
-    return this->g;
+    vector<double> g(num_bins);
+    this->cumulative_radial_distribution(g, bin_width);
+    return g;
 }
 
-void Configuration::cumulative_radial_distribution(vector<double>* g_sum, unsigned int num_bins, double bin_width)
+void Configuration::cumulative_radial_distribution(vector<double>& g_total, double bin_width)
 {
+    constexpr unsigned int d = 3;
+    const unsigned int num_bins = g_total.size();
+    const double r_max = num_bins*bin_width;
+    const double r_max_squ = r_max*r_max;
+    // TEMPORARY: Need to store this somewhere.
+    const double number_density=this->num_particles/this->get_volume();
+    //cerr << this->get_volume() << endl;
+    
     if (!this->num_particles) throw Exception(__PRETTY_FUNCTION__, ": attempting to compute g(r) on an empty configuration");
     if (!num_bins) throw Exception(__PRETTY_FUNCTION__, ": invalid num_bins=", num_bins);
     //if (!this->bin_width > 0.) throw Exception(__PRETTY_FUNCTION__, ": invalid bin_width=", bin_width);
-    if (g_sum && g_sum->size() != num_bins) throw Exception(__PRETTY_FUNCTION__, ": num_bins=", num_bins, " does not match g_sum->size()=", g_sum->size());
-    if (this->g.size() == num_bins && this->g_bin_width == bin_width)
-    {
-        for (unsigned int i = 0; i < num_bins; ++i)
-            (*g_sum)[i] += this->g[i];
-        return;
-    }
     
-    constexpr unsigned int d = 3;
-    const double r_max = num_bins*bin_width;
-    const double r_max_squ = r_max*r_max;
-
-    
-    // Declare these to make finding particles code more legible.
+    // Declare these to make the 'find-particle' code more legible.
     const ParticleIndex* id;
     const double* r1;
     const double* r2;
@@ -520,11 +507,11 @@ void Configuration::cumulative_radial_distribution(vector<double>* g_sum, unsign
     double delta_r_squ;
     vector<unsigned int> bin_count(num_bins); // should automatically initialise to zeros.
     unsigned int bin;
-    for (unsigned int i=0; i < (this->num_particles-1); ++i)
+    for (unsigned int i = 0; i < (this->num_particles-1); ++i)
     {
         id = &this->particle_table[i];
         r1 = &this->particles[id->species][id->index];
-        for (unsigned int j=i+1; j < this->num_particles; ++j)
+        for (unsigned int j = i+1; j < this->num_particles; ++j)
         {
             id = &this->particle_table[j];
             r2 = &this->particles[id->species][id->index];
@@ -544,42 +531,37 @@ void Configuration::cumulative_radial_distribution(vector<double>* g_sum, unsign
         }
     }
     
-    double number_density=this->num_particles/this->get_volume();
-    //cerr << this->get_volume() << endl;
-    this->g = vector<double>(num_bins);
-    
-    for ( unsigned int i=0; i < num_bins; ++i )
+    for ( unsigned int i = 0; i < num_bins; ++i )
     {
         //normalise
         double vol=((i+1)*(i+1)*(i+1)-i*i*i)*bin_width*bin_width*bin_width; //needs to be in 3D
         double nid=(4./3.)*M_PI*vol*number_density;//*this->number_density; //3D
-        g[i] = bin_count[i]/(nid*this->num_particles); //scale
-        if (g_sum) (*g_sum)[i] += g[i];
+        g_total[i] += bin_count[i]/(nid*this->num_particles); //scale
     }
 }
 
-void Configuration::displacement_from(Configuration b, std::vector<double> &drsqu){
+void Configuration::displacement_from(Configuration b, std::vector<double>& drsqu)
+{
     constexpr unsigned int d = 3;
-
-    if (drsqu.size()!=d) throw Exception(__PRETTY_FUNCTION__, ": squared distances mismatch");
+    
+    if (drsqu.size() != d) throw Exception(__PRETTY_FUNCTION__, ": squared distances mismatch");
     const ParticleIndex* id;
     const double* ra;
     const double* rb;
     double delta;
-
-    for(unsigned int i=0; i<this->num_particles; ++i){
-                id = &this->particle_table[i];
-                ra = &this->particles[id->species][id->index];
-
-                id = &b.particle_table[i];
-                rb = &b.particles[id->species][id->index];
-
-                for (unsigned int c = 0; c < d; ++c)
-                {
-                    delta = this->apply_boundaries(rb[c]-ra[c], c);
-                    drsqu[c] = delta*delta;
-                    
-                }
-            }
-
+    
+    for (unsigned int i = 0; i < this->num_particles; ++i)
+    {
+        id = &this->particle_table[i];
+        ra = &this->particles[id->species][id->index];
+        
+        id = &b.particle_table[i];
+        rb = &b.particles[id->species][id->index];
+        
+        for (unsigned int c = 0; c < d; ++c)
+        {
+            delta = this->apply_boundaries(rb[c]-ra[c], c);
+            drsqu[c] = delta*delta;
+        }
+    }
 }

@@ -67,9 +67,9 @@ public:
     // exmperimental g(r)
     void experimental_radial_distr();
     // simulation g(r)
-    const std::vector<double>& radial_distribution(unsigned int num_bins, double bin_width);
+    std::vector<double> radial_distribution(unsigned int num_bins, double bin_width);
     // Cumulative g(r) for computing averages.
-    void cumulative_radial_distribution(std::vector<double>* g_sum, unsigned int num_bins, double bin_width);
+    void cumulative_radial_distribution(std::vector<double>& g_total, double bin_width);
     
 protected:
     // Particle data.
@@ -88,18 +88,9 @@ protected:
     
     // ...
     std::vector< std::vector<int> > neighbour_table;
-    // g(r)
-    std::vector<double> g;
-    double g_bin_width;
-    // experimental g(r)
-    std::vector<double> experimental_g;
     
-    // number of particles
-    //int Npart;
     // number density
     //double density;
-    // box sizes
-    //std::vector<double> box;
 };
 
 #endif

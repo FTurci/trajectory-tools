@@ -20,7 +20,7 @@ public:
     void compute_msd_isf(double q);
     void save_msd_isf(std::string);
 
-    void compute_g(int num_bins, double delta_r);
+    void compute_g(unsigned int num_bins, double delta_r);
     void save_g(std::string);
     
     void compute_neighbour_correlation(bool sorting);

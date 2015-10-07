@@ -165,46 +165,49 @@ void Trajectory::compute_msd_isf(double q){
     
     // normalise
 
-    for(int t=0; t<this->length(); ++t){
-        if(num_samples[t]>0){
+    for (unsigned int t=0; t<this->length(); ++t)
+    {
+        if (num_samples[t]>0)
+        {
             for (unsigned int c = 0; c < d; ++c) this->msd[t][c]/=(double) num_samples[t];
             this->isf[t] /= (double) num_samples[t];
       }
     }
-
 }
-void Trajectory::save_msd_isf(std::string filename){
+
+void Trajectory::save_msd_isf(string path)
+{
     constexpr int d = 3;
     
-    std::ofstream fout(filename);
-    // skip the 0th lag-time  
+    std::ofstream fout(path);
+    // skip the 0th lag-time
     for (unsigned int i = 1; i < this->sequence.size(); ++i)
     {
         fout << i << '\t';
-        for (unsigned int c = 0; c < d; ++c) fout << this->msd[i][c] << "\t" ;
-        fout<< this->isf[i] << "\t"<< num_samples[i]<<"\n";
-
+        for (unsigned int c = 0; c < d; ++c) fout << this->msd[i][c] << "\t";
+        fout << this->isf[i] << "\t" << num_samples[i] << "\n";
     }
+    
     fout.close();
-
 }
 
-void Trajectory::compute_g(int num_bins, double delta_r){
+void Trajectory::compute_g(unsigned int num_bins, double delta_r)
+{
     this->g.resize(num_bins);
     this->delta_bin=delta_r;
     for (auto t=this->sequence.begin(); t!=this->sequence.end(); ++t)
-        (*t).cumulative_radial_distribution(&this->g, num_bins, delta_r);
+        (*t).cumulative_radial_distribution(this->g, delta_r);
 }
-void Trajectory::save_g(std::string filename){
 
+void Trajectory::save_g(std::string filename)
+{
     std::ofstream fout(filename);
-
+    
     for (unsigned int bin = 0; bin < this->g.size(); ++bin)
     {
         g[bin] /= this->length();
         fout << (bin+0.5)*this->delta_bin << "\t" << g[bin] << "\n";
     }
-
+    
     fout.close();
-
 }
