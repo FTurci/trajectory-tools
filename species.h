@@ -11,7 +11,7 @@ public:
     Species(unsigned long N = 0) : coords(d*N), N(N) { }
     Species(const Species& copy) : coords(copy.coords), N(copy.N) { }
     Species(const std::vector<double>& copy) : coords(copy), N(copy.size()/d) { }
-    
+
     inline double& operator[] (int n)
     {
         return this->coords[n*d];
@@ -32,11 +32,10 @@ public:
     {
         return this->N;
     }
-    
+
 protected:
     std::vector<double> coords;
     const unsigned long N;
 };
 
 #endif
-

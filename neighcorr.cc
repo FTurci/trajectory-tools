@@ -39,13 +39,13 @@ int main(int argc, char const *argv[])
         const bool gnu_style = true;
         Parser parse(gnu_style, usage, argc, argv, options, buffer);
         if (parse.error()) throw Exception("an unknown parsing error occurred");
-        
+
         if (options[HELP] || argc == 0)
         {
             printUsage(std::cout, usage);
             return EXIT_SUCCESS;
         }
-        
+
         // Filter for unrecognised (possibly mistyped) arguments to filter against unusual/undesired outcomes.
         if (options[UNKNOWN])
         {
@@ -53,16 +53,16 @@ int main(int argc, char const *argv[])
                 cerr << "unknown option: " << opt->name << endl;
             throw Exception("aborting due to unknown options");
         }
-        
+
         // Get the output file, with usual error checking.
         if (!(options[OUTPUT] && options[OUTPUT].arg))
             throw Exception("missing output path with -o (--output) option");
         const string output_path( options[OUTPUT].arg );
-        
+
         // Make sure we've been given a trajectory.
         const int max_sequence_size = parse.nonOptionsCount();
         if (!max_sequence_size) throw Exception("no input paths specified");
-        
+
         // By default use the whole trajectory, but this can be overridden on the command line.
         int first = 1;
         int last = max_sequence_size;
@@ -75,27 +75,27 @@ int main(int argc, char const *argv[])
         if (first > last) throw Exception("first index precedes last index: f=", first, "l=", last);
         if (step > last-first) throw Exception("step size larger than trajectory length: s=", step, ", length=", last-first);
         if (step < 1) throw Exception("step size needs to be >= 1: s=", step);
-        
+
         // Process the input paths for the sequence.
         vector<string> neighbour_paths( last-first+1 );
         for (int i = 0; i < (last-first+1); ++i)
             neighbour_paths[i] = parse.nonOption(i+first-1);
-        
+
         //cout << "Using trajectories:\n";
         //for (int i=0; i < (last-first+1); i++)
         //    cout << "  " << neighbour_paths[i] << "\n";
         Trajectory trajectory;
-        
+
         cout << "Reading data...\n";
-        
+
         trajectory.read_sequence_neighbours(neighbour_paths);
-        
+
         cout << "The trajectory length is " << trajectory.sequence_length() << "\n";
-        
+
         bool sorting=false;
         trajectory.compute_neighbour_correlation(sorting);
         trajectory.save_neighbour_correlation(output_path);
-        
+
         return EXIT_SUCCESS;
     }
     catch (Exception& e)
@@ -109,4 +109,3 @@ int main(int argc, char const *argv[])
         return EXIT_FAILURE;
     }
 }
-

@@ -8,7 +8,7 @@
 
 template <typename T >
 T StringToNum ( std::string &Text )
-{                               
+{
     std::stringstream ss(Text);
     T result;
     return ss >> result ? result : 0;
@@ -48,16 +48,15 @@ public:
     Exception (Args const&... args) throw() : message( stringify(args...) )
     {
     }
-    
+
     virtual const char* what() const throw()
     {
         return this->message.c_str();
     }
-    
+
 private:
     std::string message;
 };
 
 
-#endif 
-
+#endif

@@ -22,7 +22,7 @@ protected:
         double V=1;
         for (unsigned int i = 0; i < this->boundaries.size(); ++i)
         {
-            V*=this->boundaries[i];
+            V *= this->boundaries[i];
         }
         return V;
     }
