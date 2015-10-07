@@ -1,7 +1,7 @@
 # Build flags.
 DEBUG	=
 #DEBUG	= -g
-CFLAGS	= -std=c++0x -Wall -Wextra $(DEBUG)
+CFLAGS	= -Ofast -std=c++0x -Wall -Wextra $(DEBUG)
 LFLAGS	= $(DEBUG)
 
 # Build tools.
