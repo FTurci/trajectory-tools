@@ -13,10 +13,6 @@ Configuration::Configuration() : num_particles(0), particles(0)
 {
 }
 
-Configuration::Configuration(const Configuration& copy) : Container(copy), num_particles(copy.num_particles), particles(copy.particles), dispersity(copy.dispersity), particle_table(copy.particle_table)
-{
-}
-
 void Configuration::read_xyz(string path)
 {
     ifstream in(path);

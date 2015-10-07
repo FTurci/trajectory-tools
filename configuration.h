@@ -14,10 +14,10 @@ class Configuration : public Container
 {
 public:
     Configuration();
-    Configuration(const Configuration& copy);
-    //Configuration(Configuration&& move) = default;
-    //Configuration& operator=(const Configuration& copy) & = default;
-    //Configuration& operator=(Configuration&& move) & = default;
+    Configuration(const Configuration&) = default;
+    Configuration(Configuration&&) = default;
+    Configuration& operator=(const Configuration&) = default;
+    Configuration& operator=(Configuration&&) = default;
 
     // 'Blind' read functions, which read position data without foreknowledge of number of particles/species etc.
     // NB: these will be a lot slower than preallocating numbers of particles in other read functions, so should only be used on the first configuration within a trajectory.

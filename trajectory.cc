@@ -35,16 +35,16 @@ void Trajectory::read_atom(string path)
     unsigned int counter = 0;
     while (in)
     {
-        if (counter) this->sequence[counter].read_atom(in, *ref_config);
+        if (counter) this->sequence[counter].read_atom(in, ref_config);
         else
         {
             // Do a blind read, assigning the number of particles, the species etc.
             ref_config.read_atom(in);
             this->num_particles = ref_config.system_size();
             // Create space for the rest of the trajectory.
-            unsigned int num_frames = countlines/(this->num_particles+ATOM_HEADER_SIZE);
+            unsigned int num_frames = num_lines/(this->num_particles+ATOM_HEADER_SIZE);
             this->sequence = vector<Configuration>(num_frames);
-            this->sequence[counter] = Configuration(ref_config);
+            this->sequence[counter] = ref_config;
         }
 
         // Get the next character to trigger the eof flag if we're at the end.

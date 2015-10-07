@@ -9,8 +9,11 @@ class Species
 {
 public:
     Species(unsigned long N = 0) : coords(d*N), N(N) { }
-    Species(const Species& copy) : coords(copy.coords), N(copy.N) { }
+    Species(const Species<d>& copy) : coords(copy.coords), N(copy.N) { }
     Species(const std::vector<double>& copy) : coords(copy), N(copy.size()/d) { }
+    Species(Species<d>&&) = default;
+    Species<d>& operator=(Species<d> const&) = default;
+    Species<d>& operator=(Species<d>&&) = default;
 
     inline double& operator[] (int n)
     {
@@ -35,7 +38,7 @@ public:
 
 protected:
     std::vector<double> coords;
-    const unsigned long N;
+    unsigned long N;
 };
 
 #endif

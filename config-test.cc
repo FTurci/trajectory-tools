@@ -20,9 +20,10 @@ const Descriptor usage[] =
 {
     {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: config-test [options]\n\nOptions:" },
     {HELP,    0, "h", "help",   Arg::None,     "  -h, \t--help  \tPrint usage and exit." },
-    {G_DIST,  0, "g", "g(r)",   Arg::None,     "  -g, \t--g(r)  \tCompute radial distribution function." },
+    {G_DIST,  0, "g", "g(r)",   Arg::None,     "  -g, \t--g(r)  \tCompute radial distribution function."},
     {UNKNOWN, 0, "" , ""    ,   Arg::None,     "\nExamples:\n"
-                                               "  config-test -g trajectory.atom # computes g(r) over the trajectory in the atom file\n"},
+                                               "  config-test -g trajectory.atom\n"
+                                               "  config-test -g trajectory.atom\n"},
     {0,0,0,0,0,0}
 };
 
