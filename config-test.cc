@@ -15,15 +15,21 @@ const string EXE_NAME("config-test");
 #include "optionparser.h"
 using namespace option;
 // Define the available options for the parser.
-enum  optionIndex { UNKNOWN, HELP, G_DIST };
+enum optionIndex { UNKNOWN, HELP, G_DIST, MSD_ISF };
 const Descriptor usage[] =
 {
-    {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: config-test [options]\n\nOptions:" },
+    {UNKNOWN, 0, "" , "",       Arg::None,     "USAGE: config-test [options] <sequence>\n\nOptions:" },
     {HELP,    0, "h", "help",   Arg::None,     "  -h, \t--help  \tPrint usage and exit." },
     {G_DIST,  0, "g", "g(r)",   Arg::None,     "  -g, \t--g(r)  \tCompute radial distribution function."},
+    {MSD_ISF, 0, "I", "isf",    Arg::None,     "  -I, \t--isf   \tCompute intermediate scattering function."},
     {UNKNOWN, 0, "" , ""    ,   Arg::None,     "\nExamples:\n"
                                                "  config-test -g trajectory.atom\n"
-                                               "  config-test -g trajectory.atom\n"},
+                                               "  config-test -I trajectory.atom\n"
+                                               "  config-test -gI trajectory.atom\n"
+                                               "  config-test -g trajectory.atom -o g-file\n"
+                                               "  config-test -I trajectory.atom -o isf-file\n"
+                                               "  config-test -gI trajectory.atom -o g-file isf-file\n"
+                                               "  config-test -Ig trajectory.atom -o isf-file g-file"},
     {0,0,0,0,0,0}
 };
 
