@@ -58,7 +58,11 @@ int main(int argc, char const *argv[])
     variables_map vm;
     try
     {
-        store(command_line_parser(argc, argv).options(all_options).positional(positional_options).run(), vm);
+        auto parsed = command_line_parser(argc, argv)
+	  .options(all_options)
+	  .positional(positional_options)
+	  .run();
+        store(parsed, vm);
         ifstream ini_file(vm["ini"].as<string>());
         store(parse_config_file(ini_file, ini_options), vm);
     }
@@ -83,7 +87,9 @@ int main(int argc, char const *argv[])
         vector<string> in_paths = vm["input"].as< vector<string> >();
 
         // Check we're asked to do something with the trajectory.
-        unsigned int num_calculations = vm.count("rad-dist") + vm.count("isf");
+        unsigned int num_calculations = 0;
+	if (!vm.empty("rad-dist")) num_calculations++;
+	if (!vm.empty("isf")) num_calculations++;
         if (!num_calculations) throw Exception("no computations on trajectory specified");
 
         // Check we have a valid number of output paths.
@@ -92,7 +98,8 @@ int main(int argc, char const *argv[])
         {
             out_paths = vm["output"].as< vector<string> >();
             if (out_paths.size() != num_calculations)
-                throw Exception("invalid number of output paths specified: require ", num_calculations, " but given ", out_paths.size());
+	      throw Exception("invalid number of output paths specified: require ",
+			      num_calculations, " but given ", out_paths.size());
         }
 
         for (auto it = in_paths.begin(); it != in_paths.end(); ++it)
