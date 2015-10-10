@@ -8,7 +8,7 @@ using namespace std;
 #include "trajectory.h"
 #include "utilities.h"
 
-const string EXE_NAME("config-test");
+const string EXE_NAME("traj-box3d");
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>

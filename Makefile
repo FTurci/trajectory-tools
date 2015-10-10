@@ -1,6 +1,6 @@
 include Makefile.inc
 
-BINS	= neighcorr config-test
+BINS	= neighcorr traj-box3d
 OBJLIBS	= 
 OBJS	= -lboost_program_options trajectory.o configuration.o container.o
 
@@ -11,10 +11,10 @@ neighcorr: neighcorr.o
 neighcorr.o: neighcorr.cc optionparser.h trajectory.o
 	$(COMP) neighcorr.cc
 
-config-test: config-test.o
-	$(LINK) config-test config-test.o $(OBJS)
-config-test.o: config-test.cc optionparser.h trajectory.o
-	$(COMP) config-test.cc
+traj-box3d: traj-box3d.o
+	$(LINK) traj-box3d traj-box3d.o $(OBJS)
+traj-box3d.o: traj-box3d.cc optionparser.h trajectory.o
+	$(COMP) traj-box3d.cc
 
 trajectory.o: trajectory.cc trajectory.h configuration.o
 	$(COMP) trajectory.cc
