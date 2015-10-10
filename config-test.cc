@@ -17,6 +17,9 @@ const string EXE_NAME("config-test");
 #include <boost/token_functions.hpp>
 using namespace boost::program_options;
 
+// The possible calculations on a trajectory that we can perform.
+enum Calculation {G_RAD, ISF};
+
 int main(int argc, char const *argv[])
 {
     // The command-line options.
@@ -30,8 +33,8 @@ int main(int argc, char const *argv[])
     settings_options.add_options()
         ("first,f", value<long>(), "Start trajectory from [arg]th position.")
         ("last,l", value<long>(), "Terminate trajectory at [arg]th position.")
-        ("gbins", value<long>(), "Number of bins in g(r) computation.")
-        ("gbinwidth", value<double>(), "Width of bins in g(r) computation.");
+        ("gbins", value<long>()->default_value(0), "Number of bins in g(r) computation.")
+        ("gbinwidth", value<double>()->default_value(0.0), "Width of bins in g(r) computation.");
 
     // Options visible to the user in the --help message.
     options_description description("Usage: " + EXE_NAME + " [options] ...");
@@ -56,6 +59,7 @@ int main(int argc, char const *argv[])
 
     // Retrieve the options.
     variables_map vm;
+    vector<Calculation> calculation_list;
     try
     {
         auto parsed = command_line_parser(argc, argv)
@@ -65,8 +69,15 @@ int main(int argc, char const *argv[])
         store(parsed, vm);
         ifstream ini_file(vm["ini"].as<string>());
         store(parse_config_file(ini_file, ini_options), vm);
+
+        // Figure out the ordering to output calculations.
+        for (auto &opt : parsed.options)
+        {
+            if (opt.string_key == "rad-dist") calculation_list.push_back(G_RAD);
+            else if (opt.string_key == "isf") calculation_list.push_back(ISF);
+        }
     }
-    catch(error& e)
+    catch (const boost::program_options::error& e) // full namespace for transparency
     {
         cerr << EXE_NAME << ": error: " << e.what() << endl;
         cerr << description;
@@ -87,44 +98,73 @@ int main(int argc, char const *argv[])
         vector<string> in_paths = vm["input"].as< vector<string> >();
 
         // Check we're asked to do something with the trajectory.
-        unsigned int num_calculations = 0;
-	if (!vm.empty("rad-dist")) num_calculations++;
-	if (!vm.empty("isf")) num_calculations++;
-        if (!num_calculations) throw Exception("no computations on trajectory specified");
+        if (!calculation_list.size()) throw Exception("no computations on trajectory specified");
 
         // Check we have a valid number of output paths.
         vector<string> out_paths;
         if (vm.count("output"))
         {
             out_paths = vm["output"].as< vector<string> >();
-            if (out_paths.size() != num_calculations)
+            if (out_paths.size() != calculation_list.size())
 	      throw Exception("invalid number of output paths specified: require ",
-			      num_calculations, " but given ", out_paths.size());
+			      calculation_list.size(), " but given ", out_paths.size());
         }
 
-        for (auto it = in_paths.begin(); it != in_paths.end(); ++it)
-            cout << *it << endl;
-        // Make sure we've been given a trajectory.
-        /*const int sequence_size = parse.nonOptionsCount();
-        if (!sequence_size) throw Exception("no input paths specified");
-        cerr << sequence_size << " sequence paths specified..." << endl;
+        // Get the other parameters.
+        const long num_bins = vm["gbins"].as<long>();
+        const double bin_width = vm["gbinwidth"].as<double>();
+        // Error checking.
+        if (num_bins < 1) throw Exception("invalid number of bins (must be > 0): given ", num_bins);
+        //if (!bin_width > 0.) throw Exception("invalid bin_width (must be > 0): given ", bin_width);
 
-        string path = parse.nonOption(0);
-        cerr << "Reading trajectory in " << path << "..." << endl;
+        // Get the trajectory.
         Trajectory trajectory;
-        trajectory.read_atom(path);
+        if (in_paths.size() > 1)
+        {
+            cerr << "I don't know how to read multiple files right now, sorry!" << endl;
+            return EXIT_SUCCESS;
+        }
+        else
+        {
+            string path = in_paths[0];
+            trajectory.read_atom(path);
+            cerr << "Reading trajectory in " << path << "..." << endl;
+        }
         cerr << "System has " << trajectory.system_size() << " particles." << endl;
         cerr << "Trajectory contains " << trajectory.sequence_length() << " frames." << endl;
 
-        cerr << "Computing ISF..." << endl;
-        trajectory.compute_msd_isf(2*M_PI/0.11);
-        trajectory.save_msd_isf("msd.txt");
+        // Do all the requested calculations.
+        unsigned int calc_num = 0;
+        for (auto it = calculation_list.begin(); it != calculation_list.end(); ++it)
+        {
+            switch (*it)
+            {
+            case G_RAD:
+                cerr << "Computing g(r)...";
+                trajectory.compute_g(num_bins, bin_width);
+                if (vm["output"].empty())
+                {
+                    cerr << endl;
+                    trajectory.print_g(cout);
+                }
+                else trajectory.print_g(out_paths[calc_num]);
+                break;
 
-        cerr << "Computing g(r)..." << endl;
-        const unsigned int num_bins = 100;
-        const double delta_r = 0.005;
-        trajectory.compute_g(num_bins,delta_r);
-        trajectory.save_g("g.txt");*/
+            case ISF:
+                cerr << "Computing the MSD/ISF...";
+                trajectory.compute_msd_isf(2*M_PI/0.11);
+                if (vm["output"].empty())
+                {
+                    cerr << endl;
+                    trajectory.print_msd_isf(cout);
+                }
+                else trajectory.print_msd_isf(out_paths[calc_num]);
+                break;
+            }
+
+            if (!vm["output"].empty()) cerr << " written to " << out_paths[calc_num] << endl;
+            calc_num++;
+        }
 
         return EXIT_SUCCESS;
     }

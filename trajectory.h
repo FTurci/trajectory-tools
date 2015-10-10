@@ -11,17 +11,18 @@ class Trajectory
 public:
     Trajectory();
 
+    //void read_xyz(std::vector<std::string> config_paths);
     void read_atom(std::string path);
-    void read_sequence(std::vector<std::string> config_paths,
-                       std::vector<std::string> neighbour_paths=std::vector<std::string>());
     void read_sequence_neighbours(std::vector<std::string> neighbour_paths);
     void print_configuration(unsigned int frame);
 
     void compute_msd_isf(double q);
-    void save_msd_isf(std::string);
+    void print_msd_isf(std::string path);
+    void print_msd_isf(std::ostream& out);
 
     void compute_g(unsigned int num_bins, double delta_r);
-    void save_g(std::string);
+    void print_g(std::string path);
+    void print_g(std::ostream& out);
 
     void compute_neighbour_correlation(bool sorting);
     void save_neighbour_correlation(std::string);

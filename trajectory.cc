@@ -4,6 +4,8 @@
 #include <iomanip>
 using namespace std;
 
+#include "utilities.h"
+
 
 Trajectory::Trajectory()
 {
@@ -18,6 +20,7 @@ void Trajectory::read_atom(string path)
 
     // Count how many lines there are, so after reading the first configuration we know how many frames there are in this trajectory.
     ifstream in(path);
+    if (!in) throw Exception(__PRETTY_FUNCTION__, ": could not open file ", path);
     unsigned long num_lines = 0;
     string line;
     while(in)
@@ -55,11 +58,11 @@ void Trajectory::read_atom(string path)
     in.close();
 }
 
-void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
+/*void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
 {
     for (auto it = config_paths.begin(); it != config_paths.end(); ++it) cout << *it << "\n";
     for (auto it = neighbour_paths.begin(); it != neighbour_paths.end(); ++it) cout << *it << "\n";
-}
+    }*/
 
 void Trajectory::read_sequence_neighbours(vector<string> path_list)
 {
@@ -151,20 +154,25 @@ void Trajectory::compute_msd_isf(double q)
     }
 }
 
-void Trajectory::save_msd_isf(string path)
+void Trajectory::print_msd_isf(string path)
+{
+    ofstream out(path);
+    if (!out) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path, " for writing");
+    this->print_msd_isf(out);
+    out.close();
+}
+
+void Trajectory::print_msd_isf(ostream& out)
 {
     constexpr int d = 3;
 
-    ofstream fout(path);
     // skip the 0th lag-time
     for (unsigned int i = 1; i < this->sequence_length(); ++i)
     {
-        fout << i << '\t';
-        for (unsigned int c = 0; c < d; ++c) fout << this->msd[i][c] << "\t";
-        fout << this->isf[i] << "\t" << num_samples[i] << "\n";
+        out << i << '\t';
+        for (unsigned int c = 0; c < d; ++c) out << this->msd[i][c] << "\t";
+        out << this->isf[i] << "\t" << num_samples[i] << "\n";
     }
-
-    fout.close();
 }
 
 void Trajectory::compute_g(unsigned int num_bins, double delta_r)
@@ -175,15 +183,19 @@ void Trajectory::compute_g(unsigned int num_bins, double delta_r)
         (*t).cumulative_radial_distribution(this->g, delta_r);
 }
 
-void Trajectory::save_g(std::string filename)
+void Trajectory::print_g(string path)
 {
-    std::ofstream fout(filename);
+    ofstream out(path);
+    if (!out) throw Exception(__PRETTY_FUNCTION__, ": could not open ", path, " for writing");
+    this->print_g(out);
+    out.close();
+}
 
+void Trajectory::print_g(ostream& out)
+{
     for (unsigned int bin = 0; bin < this->g.size(); ++bin)
     {
         g[bin] /= this->sequence_length();
-        fout << (bin+0.5)*this->delta_bin << "\t" << g[bin] << "\n";
+        out << (bin+0.5)*this->delta_bin << "\t" << g[bin] << "\n";
     }
-
-    fout.close();
 }
