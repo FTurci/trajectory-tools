@@ -177,10 +177,31 @@ void Trajectory::print_msd_isf(ostream& out)
 
 void Trajectory::compute_g(unsigned int num_bins, double delta_r)
 {
-    this->g.resize(num_bins);
-    this->delta_bin=delta_r;
+    const unsigned int num_species = this->sequence[0].get_dispersity().size();
+    // We need to make room for the g(r) for each species and the total.
+    this->g = vector< vector<double> >(num_species+1, vector<double>(num_bins) );
+    this->delta_bin = delta_r;
+
     for (auto t = this->sequence.begin(); t != this->sequence.end(); ++t)
-        (*t).cumulative_radial_distribution(this->g, delta_r);
+    {
+        // g(r) for individual species.
+        for (unsigned int species = 0; species < num_species; ++species)
+            (*t).cumulative_radial_distribution(species, this->g[species], delta_r);
+        // Add the missing terms to the combined form: We can add the individual contributions calculated above later.
+        for (unsigned int species_a = 0; species_a < num_species-1; ++species_a)
+            for (unsigned int species_b = species_a+1; species_b < num_species; ++species_b)
+                (*t).cumulative_radial_distribution(species_a, species_b, this->g[num_species], delta_r);
+    }
+
+    // Fill in the missing information for the combined form.
+    for (unsigned int species = 0; species < num_species; ++species)
+        for (unsigned int bin = 0; bin < num_bins; ++bin)
+            this->g[num_species][bin] += this->g[species][bin];
+
+    // We want the average so we have to divide by the number of samples.
+    for (unsigned int species = 0; species <= num_species; ++species)
+        for (unsigned int bin = 0; bin < num_bins; ++bin)
+            this->g[species][bin] /= this->sequence_length();
 }
 
 void Trajectory::print_g(string path)
@@ -193,9 +214,11 @@ void Trajectory::print_g(string path)
 
 void Trajectory::print_g(ostream& out)
 {
-    for (unsigned int bin = 0; bin < this->g.size(); ++bin)
+    for (unsigned int bin = 0; bin < this->g[0].size(); ++bin)
     {
-        g[bin] /= this->sequence_length();
-        out << (bin+0.5)*this->delta_bin << "\t" << g[bin] << "\n";
+        out << (bin+0.5)*this->delta_bin;
+        for (auto species = this->g.begin(); species != this->g.end(); ++species)
+            out << "\t" << (*species)[bin];
+        out << "\n";
     }
 }

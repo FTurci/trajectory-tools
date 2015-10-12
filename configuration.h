@@ -70,10 +70,14 @@ public:
     void cumulative_msd_isf(std::vector<double>& msd_isf_total, const Configuration& b, const double q) const;
     // exmperimental g(r)
     void experimental_radial_distr() const;
-    // simulation g(r)
+    // Simulation g(r).
     std::vector<double> radial_distribution(unsigned int num_bins, double bin_width) const;
-    // Cumulative g(r) for computing averages.
+    std::vector<double> radial_distribution(unsigned int species, unsigned int num_bins, double bin_width) const;
+    std::vector<double> radial_distribution(unsigned int species_a, unsigned int species_b, unsigned int num_bins, double bin_width) const;
+    // Cumulative calculations for computing averages.
     void cumulative_radial_distribution(std::vector<double>& g_total, double bin_width) const;
+    void cumulative_radial_distribution(unsigned int species, std::vector<double>& g_total, double bin_width) const;
+    void cumulative_radial_distribution(unsigned int species_a, unsigned int species_b, std::vector<double>& g_total, double bin_width) const;
 
 protected:
     // Particle data.

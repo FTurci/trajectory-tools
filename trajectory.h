@@ -43,7 +43,7 @@ private:
     std::vector<double> isf;
     std::vector<std::vector<double> > msd;
     std::vector<int> num_samples;
-    std::vector<double> g;
+    std::vector< std::vector<double> > g;
 
     unsigned int num_particles;
     double delta_bin;
