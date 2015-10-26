@@ -5,25 +5,197 @@
 #include <list>
 using namespace std;
 
+#include <unistd.h>
+
 #include "trajectory.h"
 #include "utilities.h"
 
 const string EXE_NAME("traj-box3d");
 
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/token_functions.hpp>
-using namespace boost::program_options;
 
-// The possible calculations on a trajectory that we can perform.
+// The possible trajectory calculations we can perform.
 enum Calculation {G_RAD, ISF};
 
-int main(int argc, char const *argv[])
+// Simple wrapper for GNU getopt. Also reads .ini files.
+struct program_options
 {
+    // Options for an execution.
+    bool help;
+    bool g_rad;
+    bool isf;
+    // Keep a list of the computations selected to keep track of the order selected.
+    vector<Calculation> calculation_list;
+
+    // Settings for the calculations/etc. Can also be set in the .ini file.
+    string ini_path;
+    int trajectory_start;
+    int trajectory_end;
+
+    // Non-option arguments specify io paths.
+    list<string> input_paths;
+    list<string> output_paths;
+
+    // Default values for arguments.
+    program_options()
+    {
+        this->help = false;
+        this->g_rad = false;
+        this->isf = false;
+
+        this->ini_path = "settings.ini";
+        this->trajectory_start = 0;
+        this->trajectory_end = -1;
+    }
+
+    static const string help_message;
+
+    void parse_command_line(int argc, char** argv);
+
+    void read_ini(string path)
+    {
+        cerr << path << endl;
+    }
+};
+
+const string program_options::help_message(
+    "Options:\n"
+    "  -h [ --help ]                    Produce this help message.\n"
+    "  -g [ --rad-dist ]                Compute radial distribution function g(r).\n"
+    "  -I [ --isf ]                     Compute the mean-squared displacement (MSD)\n"
+    "                                   & intermediate scattering function (ISF).\n"
+    "  -o [ --output ] arg              Output path(s) to put calculations in.\n"
+    "\n"
+    "Settings:\n"
+    "  -s [ --ini ] arg (=settings.ini) Settings file (in .INI format) to load.\n"
+    "  -f [ --first ] arg               Start trajectory from position arg.\n"
+    "  -l [ --last ] arg                Terminate trajectory at position arg.\n"
+    "  --gbins arg (=0)                 Number of bins in g(r) computation.\n"
+    "  --gbinwidth arg (=0)             Width of bins in g(r) computation.");
+
+void program_options::parse_command_line(int argc, char** argv)
+{
+    // This complex term tells GNU getopt what token are valid and whether they require an argument (see getopt documentation).
+    const char* opts = ":hogIs:f:l:";
+
+    // For GNU getopt parsing.
+    int c;
+    opterr = 0;
+    // Keep track of where the -o flag occurs, if at all - we will need this index later when parsing the non-option arguments as o is meant to accept a variable number of arguments.
+    unsigned int output_index = 0;
+
+    while ((c = getopt (argc, argv, opts)) != -1)
+    {
+        switch (c)
+        {
+        case 'h':
+            this->help = true;
+            break;
+
+        case 'o':
+            if (output_index) throw Exception("error: multiple -o arguments given");
+            output_index = optind;
+            break;
+
+        case 'g':
+            if (this->g_rad) throw Exception("error: multiple -g arguments given");
+            this->g_rad = true;
+            this->calculation_list.push_back(G_RAD);
+            break;
+
+        case 'I':
+            if (this->isf) throw Exception("error: multiple -I arguments given");
+            this->isf = true;
+            this->calculation_list.push_back(ISF);
+            break;
+
+        case 's':
+            this->ini_path = string(optarg);
+            break;
+
+        case 'f':
+            this->trajectory_start = stoi(optarg);
+            break;
+
+        case 'l':
+            this->trajectory_end = stoi(optarg);
+            break;
+
+        case ':':
+        {
+            string message = string("option -") + char(optopt) + " requires an argument";
+            throw Exception(message);
+        }
+
+        case '?':
+        {
+            string message = string("unknown option -") + char(optopt);
+            throw Exception(message);
+        }
+
+        default:
+            throw Exception("unknown error occurred");
+            break;
+        }
+    }
+
+    // Error checking on the trajectory indices.
+    if (this->trajectory_start < 0)
+        throw Exception("invalid trajectory start point: ", this->trajectory_start);
+    if (this->trajectory_end < -1)
+        throw Exception("invalid trajectory end point: ", this->trajectory_end);
+    if (this->trajectory_end != -1 && this->trajectory_start > this->trajectory_end)
+        throw Exception("invalid trajectory range: start > end, ", this->trajectory_start, " > ", this->trajectory_end);
+
+    // There have to be enough arguments to allow the output paths to be specified.
+    if (output_index && (output_index + this->calculation_list.size()) > static_cast<unsigned int>(argc))
+        throw Exception("expected ", this->calculation_list.size(), " arguments with -o");
+
+    // Remaining arguments give the input and output paths.
+    for (unsigned int i = optind; i < static_cast<unsigned int>(argc); ++i)
+    {
+        if (i < output_index || i >= output_index+this->calculation_list.size()) 
+            this->input_paths.push_back(argv[i]);
+        else this->output_paths.push_back(argv[i]);
+    }
+}
+
+
+int main(int argc, char** argv)
+{
+    program_options options;
+
+    try
+    {
+        options.parse_command_line(argc, argv);
+    }
+    catch (Exception& e)
+    {
+        cerr << EXE_NAME << ": " << e.what() << endl;
+        return EXIT_FAILURE;
+    }
+
+    if (options.help || options.input_paths.empty())
+    {
+        cerr << "Usage: " << EXE_NAME << " [options] trajectory" << endl << endl;
+        cerr << options.help_message << endl;
+        return EXIT_SUCCESS;
+    }
+
+    cerr << "In:" << endl;
+    for (auto it = options.input_paths.begin(); it != options.input_paths.end(); ++it)
+        cout << *it << endl;
+    cerr << "Out:" << endl;
+    for (auto it = options.output_paths.begin(); it != options.output_paths.end(); ++it)
+        cout << *it << endl;
+    /*if (options.calculation_list.empty())
+    {
+        cerr << "no calculations specified on trajectory" << endl;
+        return EXIT_FAILURE;
+        }*/
+
+    return EXIT_SUCCESS;
     // The command-line options.
-    options_description general_options("Options"), settings_options("Settings");
+    /*options_description general_options("Options"), settings_options("Settings");
     general_options.add_options()
         ("help,h", "Produce this help message.")
         ("ini,s", value<string>()->default_value("settings.ini"), "Settings file (in .INI format) to load.")
@@ -177,5 +349,5 @@ int main(int argc, char const *argv[])
     {
         cerr << EXE_NAME << ": an unknown error occurred." << endl;
         return EXIT_FAILURE;
-    }
+        }*/
 }

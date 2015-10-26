@@ -2,7 +2,7 @@ include Makefile.inc
 
 BINS	= neighcorr  minimal traj-box3d
 OBJLIBS	= 
-OBJS	=   -lboost_program_options trajectory.o configuration.o container.o
+OBJS	= trajectory.o configuration.o container.o
 
 all: $(BINS) $(OBJLIBS)
 

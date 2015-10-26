@@ -2,7 +2,7 @@
 DEBUG	=
 #DEBUG	= -g
 CFLAGS	= -Ofast -std=c++11 -Wall -Wextra $(DEBUG)
-LFLAGS	=  $(DEBUG)
+LFLAGS	= $(DEBUG)
 
 # Build tools.
 CC	= g++
