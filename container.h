@@ -10,13 +10,11 @@ public:
     Container();
     Container(const Container& copy);
 
-protected:
-    inline double apply_boundaries(double value, unsigned int dimension) const
+    inline std::vector<double> get_size() const
     {
-        if(value > this->boundaries[dimension]*0.5) return value-this->boundaries[dimension];
-        else if(value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
-        else return value;
+        return this->boundaries;
     }
+
     inline double get_volume() const
     {
         double V=1;
@@ -25,6 +23,14 @@ protected:
             V *= this->boundaries[i];
         }
         return V;
+    }
+
+protected:
+    inline double apply_boundaries(double value, unsigned int dimension) const
+    {
+        if(value > this->boundaries[dimension]*0.5) return value-this->boundaries[dimension];
+        else if(value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
+        else return value;
     }
     std::vector<double> boundaries;
 };

@@ -14,7 +14,7 @@ neighcorr.o: neighcorr.cc optionparser.h trajectory.o
 
 traj-box3d: traj-box3d.o
 	$(LINK) traj-box3d traj-box3d.o $(OBJS)
-traj-box3d.o: traj-box3d.cc optionparser.h trajectory.o
+traj-box3d.o: traj-box3d.cc trajectory.o
 	$(COMP) traj-box3d.cc
 
 

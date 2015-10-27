@@ -9,6 +9,7 @@
 class Trajectory
 {
 public:
+    //constexpr unsigned int d = 3;
     Trajectory();
 
     //void read_xyz(std::vector<std::string> config_paths);
@@ -27,6 +28,10 @@ public:
     void compute_neighbour_correlation(bool sorting);
     void save_neighbour_correlation(std::string);
 
+    inline std::vector<double> container_size() const
+    {
+        return this->sequence[0].get_size();
+    }
     inline unsigned int system_size()
     {
         return this->num_particles;
@@ -40,9 +45,10 @@ private:
     std::vector<Configuration> sequence;
     std::vector<double> neigh_corr;
     std::vector<double> neigh_norm;
+    std::vector<unsigned int> num_samples;
+
     std::vector<double> isf;
     std::vector<std::vector<double> > msd;
-    std::vector<unsigned int> num_samples;
     std::vector<std::vector<double> > g;
 
     unsigned int num_particles;
