@@ -13,10 +13,13 @@ Trajectory::Trajectory()
 }
 
 //! read a LAMMPS atom file
-void Trajectory::read_atom(string path)
+void Trajectory::read_atom(string path, unsigned int start, unsigned int end)
 {
     constexpr unsigned int d = 3;
     constexpr unsigned int ATOM_HEADER_SIZE = 6+d;
+
+    if (start < 1) throw Exception(__PRETTY_FUNCTION__, ": invalid start frame for trajectory ", start);
+    if (end > 0 && start > end) throw Exception(__PRETTY_FUNCTION__, ": invalid trajectory range: start > end, ", start, " > ", end);
 
     // Count how many lines there are, so after reading the first configuration we know how many frames there are in this trajectory.
     ifstream in(path);
@@ -56,6 +59,15 @@ void Trajectory::read_atom(string path)
     }
 
     in.close();
+
+    // Trim the trajectory down to the selected range.
+    if (start > 1) this->sequence.erase(this->sequence.begin(), this->sequence.begin()+start-1);
+    if (end != 0)
+    {
+        int num_frames = end - start + 1;
+        int num_delete = this->sequence.size() - num_frames;
+        if (num_delete > 0) this->sequence.erase(this->sequence.end()-num_delete, this->sequence.end());
+    }
 }
 
 /*void Trajectory::read_sequence(std::vector<string> config_paths, std::vector<string> neighbour_paths)
@@ -116,7 +128,7 @@ void Trajectory::save_neighbour_correlation(std::string filename){
     fout.close();
 }
 
-void Trajectory::compute_msd_isf(double q)
+void Trajectory::compute_msd_isf(double q, unsigned int max_samples)
 {
     constexpr unsigned int d = 3;
 
@@ -138,10 +150,10 @@ void Trajectory::compute_msd_isf(double q)
     {
         for (unsigned int tt = t+1; tt < this->sequence_length(); ++tt)
         {
-            if (this->num_samples[tt-t] < 100*this->num_particles)
+            if (max_samples == 0 || (this->num_samples[tt-t] < max_samples*this->num_particles))
             {
                 this->sequence[t].cumulative_msd_isf(msd_isf_table[tt-t], sequence[tt], q);
-                this->num_samples[tt-t]+=this->num_particles;
+                this->num_samples[tt-t] += this->num_particles;
             }
         }
     }

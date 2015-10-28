@@ -13,11 +13,12 @@ public:
     Trajectory();
 
     //void read_xyz(std::vector<std::string> config_paths);
-    void read_atom(std::string path);
+    void read_atom(std::string path, unsigned int start=1, unsigned int end=0);
     void read_sequence_neighbours(std::vector<std::string> neighbour_paths);
     void print_configuration(unsigned int frame);
 
-    void compute_msd_isf(double q);
+    // max_samples = 0 indicates no maximum.
+    void compute_msd_isf(double q, unsigned int max_samples = 0);
     void print_msd_isf(std::string path);
     void print_msd_isf(std::ostream& out);
 

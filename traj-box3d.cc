@@ -20,6 +20,8 @@ enum Calculation {G_RAD, ISF};
 // Simple wrapper for GNU getopt. Also reads .ini files.
 struct ProgramOptions
 {
+    string ini_path;
+
     // Options for an execution.
     bool help;
     bool g_rad;
@@ -28,11 +30,12 @@ struct ProgramOptions
     vector<Calculation> calculation_list;
 
     // Settings for the calculations/etc. Can also be set in the .ini file.
-    string ini_path;
     int trajectory_start;
     int trajectory_end;
     int g_num_bins;
     double g_bin_width;
+    double isf_k;
+    int isf_max_samples;
 
     // Non-option arguments specify io paths.
     list<string> input_paths;
@@ -41,25 +44,25 @@ struct ProgramOptions
     // Default values for arguments.
     ProgramOptions()
     {
+        this->ini_path = "settings.ini";
+
         this->help = false;
         this->g_rad = false;
         this->isf = false;
 
-        this->ini_path = "settings.ini";
-        this->trajectory_start = 0;
-        this->trajectory_end = -1;
+        this->trajectory_start = 1;
+        this->trajectory_end = 0;  // use the whole trajectory by default.
         this->g_num_bins = 100;
-        this->g_bin_width = 0.0;
+        this->g_bin_width = 0.0;  // If 0 will be scaled by box size before operation.
+        this->isf_k = 2*M_PI/0.11;
+        this->isf_max_samples = 100; /**** CHANGE TO ZERO ***/
     }
 
     static const string help_message;
 
     void parse_command_line(int argc, char** argv);
-
-    void parse_ini(string path)
-    {
-        cerr << path << endl;
-    }
+    void parse_ini(string path);
+    void validate_options();
 };
 
 const string ProgramOptions::help_message(
@@ -73,14 +76,16 @@ const string ProgramOptions::help_message(
     "Settings:\n"
     "  -s [ --ini ] arg (=settings.ini) Settings file (in .INI format) to load.\n"
     "  -f [ --first ] arg               Start trajectory from position arg.\n"
-    "  -l [ --last ] arg                Terminate trajectory at position arg.\n"
-    "  --gbins arg (=0)                 Number of bins in g(r) computation.\n"
-    "  --gbinwidth arg (=0)             Width of bins in g(r) computation.");
+    "  -l [ --last ] arg                Terminate trajectory at position arg: 0 indicates never.\n"
+    "  -b [ --gbins ] arg               Number of bins in g(r) computation.\n"
+    "  -w [ --gbinwidth ] arg           Width of bins in g(r) computation.\n"
+    "  -k [ --isfk ] arg               Wavevector for ISF, F(k,t).\n"
+    "  -m [ --isfmax ] arg          Maximum samples in ISF/MSD computation.");
 
 void ProgramOptions::parse_command_line(int argc, char** argv)
 {
     // This complex term tells GNU getopt what token are valid and whether they require an argument (see getopt documentation).
-    const char* opts = ":hogIs:f:l:";
+    const char* opts = ":hogIs:f:l:b:w:k:m:";
 
     // For GNU getopt parsing.
     int c;
@@ -125,6 +130,22 @@ void ProgramOptions::parse_command_line(int argc, char** argv)
             this->trajectory_end = stoi(optarg);
             break;
 
+        case 'b':
+            this->g_num_bins = stoi(optarg);
+            break;
+
+        case 'w':
+            this->g_bin_width= stod(optarg);
+            break;
+
+        case 'k':
+            this->isf_k = stod(optarg);
+            break;
+
+        case 'm':
+            this->isf_max_samples = stoi(optarg);
+            break;
+
         case ':':
         {
             string message = string("option -") + char(optopt) + " requires an argument";
@@ -155,23 +176,42 @@ void ProgramOptions::parse_command_line(int argc, char** argv)
         else this->output_paths.push_back(argv[i]);
     }
 
-    /* Error checking of parameters. */
+    this->validate_options();
+}
 
-    if (this->input_paths.empty()) throw Exception("no trajectory selected");
+void ProgramOptions::parse_ini(string path)
+{
+    ifstream in(path);
+    if (in)
+    {
+        //map<string, char> table;
+        //table["test"] = 't';
+        cerr << "Opened " << path << endl;
+    }
 
-    // Make sure we will actually do something with the paths.
-    if (this->calculation_list.empty()) throw Exception("no calculations specified on trajectory");
+    this->validate_options();
+}
 
-    if (this->g_num_bins < 0) throw Exception("must have positive number of bins");
-    if (this->g_bin_width < 0.) throw Exception("bin_width must be positive");
+void ProgramOptions::validate_options()
+{
+    if (!this->help)
+    {
+        if (this->input_paths.empty()) throw Exception("no trajectory selected");
 
-    // Error checking on the trajectory indices.
-    if (this->trajectory_start < 0)
-        throw Exception("invalid trajectory start point: ", this->trajectory_start);
-    if (this->trajectory_end < -1)
-        throw Exception("invalid trajectory end point: ", this->trajectory_end);
-    if (this->trajectory_end != -1 && this->trajectory_start > this->trajectory_end)
-        throw Exception("invalid trajectory range: start > end, ", this->trajectory_start, " > ", this->trajectory_end);
+        // Make sure we will actually do something with the paths.
+        if (this->calculation_list.empty()) throw Exception("no calculations specified on trajectory");
+
+        if (this->g_num_bins < 0) throw Exception("must have positive number of bins");
+        if (this->g_bin_width < 0.) throw Exception("bin_width must be positive");
+
+        // Error checking on the trajectory indices.
+        if (this->trajectory_start < 1)
+            throw Exception("invalid trajectory start point: ", this->trajectory_start);
+        if (this->trajectory_end < 0)
+            throw Exception("invalid trajectory end point: ", this->trajectory_end);
+        if (this->trajectory_end != 0 && this->trajectory_start > this->trajectory_end)
+            throw Exception("invalid trajectory range: start > end, ", this->trajectory_start, " > ", this->trajectory_end);
+    }
 }
 
 
@@ -204,13 +244,13 @@ int main(int argc, char** argv)
         Trajectory trajectory;
         if (options.input_paths.size() > 1)
         {
-            cerr << "I don't know how to read multiple files right now, sorry!" << endl;
+            cerr << EXE_NAME << ": I don't know how to read multiple files right now, sorry!" << endl;
             return EXIT_SUCCESS;
         }
         else
         {
             string path = options.input_paths.front();
-            trajectory.read_atom(path);
+            trajectory.read_atom(path, options.trajectory_start, options.trajectory_end);
             cerr << "Reading trajectory in " << path << "..." << endl;
         }
         cerr << "System has " << trajectory.system_size() << " particles." << endl;
@@ -242,7 +282,7 @@ int main(int argc, char** argv)
 
             case ISF:
                 cerr << "Computing the MSD/ISF...";
-                trajectory.compute_msd_isf(2*M_PI/0.11);
+                trajectory.compute_msd_isf(options.isf_k, options.isf_max_samples);
                 if (!options.output_paths.size())
                 {
                     cerr << endl;

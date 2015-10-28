@@ -1,7 +1,7 @@
 include Makefile.inc
 
-BINS	= neighcorr  minimal traj-box3d
-OBJLIBS	= 
+BINS	= neighcorr traj-box3d minimal
+OBJLIBS	=
 OBJS	= trajectory.o configuration.o container.o
 
 all: $(BINS) $(OBJLIBS)
@@ -10,7 +10,7 @@ neighcorr: neighcorr.o
 	$(LINK) neighcorr neighcorr.o $(OBJS)
 neighcorr.o: neighcorr.cc optionparser.h trajectory.o
 	$(COMP) neighcorr.cc
-	
+
 
 traj-box3d: traj-box3d.o
 	$(LINK) traj-box3d traj-box3d.o $(OBJS)
@@ -32,4 +32,3 @@ container.o: container.cc container.h
 
 clean:
 	@rm -fv *.o *~ *.pyc $(BINS) $(OBJLIBS)
-

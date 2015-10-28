@@ -1,5 +1,6 @@
 # Build flags.
-DEBUG	=
+DEBUG   =
+#DEBUG	= -pg
 #DEBUG	= -g
 CFLAGS	= -Ofast -std=c++11 -Wall -Wextra $(DEBUG)
 LFLAGS	= $(DEBUG)
