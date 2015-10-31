@@ -11,4 +11,3 @@ LD	= g++
 COMP	= $(CC) $(CFLAGS) -c
 LINK	= $(LD) $(LFLAGS) -o
 AR      = ar
-
