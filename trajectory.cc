@@ -210,8 +210,15 @@ void Trajectory::compute_g(unsigned int num_bins, double delta_r)
 
     // Fill in the missing information for the combined form.
     for (unsigned int species = 0; species < num_species; ++species)
+    {
+        unsigned int sub_num_particles = this->sequence[0].get_dispersity()[species];
         for (unsigned int bin = 0; bin < num_bins; ++bin)
+        {
             this->g[num_species][bin] += this->g[species][bin];
+            this->g[species][bin] /= (1.0*sub_num_particles/this->num_particles);
+            this->g[species][bin] /= (1.0*sub_num_particles/this->num_particles);
+        }
+    }
 
     // We want the average so we have to divide by the number of samples.
     for (unsigned int species = 0; species <= num_species; ++species)

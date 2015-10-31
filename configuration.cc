@@ -483,6 +483,9 @@ vector<double> Configuration::radial_distribution(unsigned int species, unsigned
 
     vector<double> g(num_bins);
     this->cumulative_radial_distribution(species, g, bin_width);
+    for (unsigned int i = 0; i < num_bins; ++i)
+        g[i] = g[i] * (1.0*this->num_particles/this->dispersity[species])*(1.0*this->num_particles/this->dispersity[species]);
+
     return g;
 }
 
@@ -537,11 +540,6 @@ void Configuration::cumulative_radial_distribution(unsigned int species_a, unsig
     if (species_a >= this->dispersity.size()) throw Exception(__PRETTY_FUNCTION__, ": invalid species=", species_a);
     if (species_b >= this->dispersity.size()) throw Exception(__PRETTY_FUNCTION__, ": invalid species=", species_b);
 
-    // TEMPORARY: Need to store this somewhere.
-    //const unsigned int sub_num_particles = (species_a == species_b) ? this->dispersity[species_a] : this->dispersity[species_a]+this->dispersity[species_b];
-    const double number_density = this->num_particles/this->get_volume();
-    //cerr << this->get_volume() << endl;
-
     // Declare these to make the 'find-particle' code more legible.
     const double* r1;
     const double* r2;
@@ -580,12 +578,16 @@ void Configuration::cumulative_radial_distribution(unsigned int species_a, unsig
         }
     }
 
+    // We need the global number density for normalisation.
+    // If computing the density for a single species then further renormalisation using the species number density may be needed.
+    const double number_density = this->num_particles/this->get_volume();
+
     for ( unsigned int i = 0; i < num_bins; ++i )
     {
-        //normalise
-        double vol=((i+1)*(i+1)*(i+1)-i*i*i)*bin_width*bin_width*bin_width; //needs to be in 3D
-        double nid=(4./3.)*M_PI*vol*number_density;//*this->number_density; //3D
-        g_total[i] += bin_count[i]/(nid*this->num_particles); //scale
+        // This normalisation is only valid in 3d:
+        double vol=((i+1)*(i+1)*(i+1)-i*i*i)*bin_width*bin_width*bin_width;
+        double nid=(4./3.)*M_PI*vol*number_density;
+        g_total[i] += bin_count[i]/(nid*this->num_particles);
     }
 }
 
