@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 #include <algorithm>
 using namespace std;
 
@@ -54,7 +55,7 @@ struct ProgramOptions
         this->trajectory_end = 0;  // use the whole trajectory by default.
         this->g_num_bins = 100;
         this->g_bin_width = 0.0;  // If 0 will be scaled by box size before operation.
-        this->isf_k = 2*M_PI/0.11;
+        this->isf_k = 0;
         this->isf_max_samples = 100; /**** CHANGE TO ZERO ***/
     }
 
@@ -79,8 +80,8 @@ const string ProgramOptions::help_message(
     "  -l [ --last ] arg                Terminate trajectory at position arg: 0 indicates never.\n"
     "  -b [ --gbins ] arg               Number of bins in g(r) computation.\n"
     "  -w [ --gbinwidth ] arg           Width of bins in g(r) computation.\n"
-    "  -k [ --isfk ] arg               Wavevector for ISF, F(k,t).\n"
-    "  -m [ --isfmax ] arg          Maximum samples in ISF/MSD computation.");
+    "  -k [ --isfk ] arg                Wavevector for ISF, F(k,t).\n"
+    "  -m [ --isfmax ] arg              Maximum samples in ISF/MSD computation.");
 
 void ProgramOptions::parse_command_line(int argc, char** argv)
 {
@@ -181,12 +182,57 @@ void ProgramOptions::parse_command_line(int argc, char** argv)
 
 void ProgramOptions::parse_ini(string path)
 {
+    map<string, char> token_list;
+    token_list["first"] = 'f';
+    token_list["last"] = 'l';
+    token_list["gbins"] = 'b';
+    token_list["gbinwidth"] = 'w';
+    token_list["isfk"] = 'k';
+    token_list["isfmax"] = 'm';
+
     ifstream in(path);
     if (in)
     {
-        //map<string, char> table;
-        //table["test"] = 't';
-        cerr << "Opened " << path << endl;
+        string line;
+        while (getline(in,line))
+        {
+            line.erase(remove_if(line.begin(), line.end(), ::isspace), line.end());
+            if (line.length() > 0 && line[0] != '#')
+            {
+                int position = line.find('=');
+                if (position < 1) throw Exception("Incorrectly formatted INI file, ", path, " line begins with '='");
+
+                string token = line.substr(0, position);
+                string value = line.substr(position+1);
+
+                switch (token_list[token])
+                {
+                case 'f':
+                    this->trajectory_start = stoi(value);
+                    break;
+
+                case 'l':
+                    this->trajectory_end = stoi(value);
+                    break;
+
+                case 'b':
+                    this->g_num_bins = stoi(value);
+                    break;
+
+                case 'w':
+                    this->g_bin_width= stod(value);
+                    break;
+
+                case 'k':
+                    this->isf_k = stod(value);
+                    break;
+
+                case 'm':
+                    this->isf_max_samples = stoi(value);
+                    break;
+                }
+            }
+        }
     }
 
     this->validate_options();
@@ -222,7 +268,7 @@ int main(int argc, char** argv)
     try
     {
         options.parse_command_line(argc, argv);
-        options.parse_ini(options.ini_path);
+        if (!options.help) options.parse_ini(options.ini_path);
     }
     catch (Exception& e)
     {
