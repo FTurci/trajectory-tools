@@ -1,6 +1,6 @@
 include Makefile.inc
 
-BINS	= neighcorr traj-box3d minimal
+BINS	= neighcorr traj-box3d go_big minimal
 OBJLIBS	=
 OBJS	= trajectory.o configuration.o container.o
 
@@ -16,6 +16,12 @@ traj-box3d: traj-box3d.o
 	$(LINK) traj-box3d traj-box3d.o $(OBJS)
 traj-box3d.o: traj-box3d.cc trajectory.o
 	$(COMP) traj-box3d.cc
+
+
+go_big: go_big.o
+	$(LINK) go_big go_big.o $(OBJS)
+go_big.o: go_big.cc configuration.o
+	$(COMP) go_big.cc
 
 
 minimal: minimal.o
