@@ -1,8 +1,10 @@
-include Makefile.inc
+include makefile.inc
 
-BINS	= neighcorr traj-box3d go_big minimal
+#BINS	= neighcorr traj-box3d go_big minimal
+BINS	= go_big
 OBJLIBS	=
-OBJS	= trajectory.o configuration.o container.o
+#OBJS	= trajectory.o configuration.o container.o
+OBJS	= configuration.o
 
 all: $(BINS) $(OBJLIBS)
 
@@ -31,8 +33,10 @@ minimal.o: minimal.cc trajectory.o
 
 trajectory.o: trajectory.cc trajectory.h configuration.o
 	$(COMP) trajectory.cc
-configuration.o: configuration.cc configuration.h container.o species.h utilities.h
+configuration.o: configuration.cc configuration.h configuration_base.h configuration_view.h subsystems.h
 	$(COMP) configuration.cc
+subsystems.o: subsystems.cc subsystems.h
+	$(COMP) subsystems.cc
 container.o: container.cc container.h
 	$(COMP) container.cc
 

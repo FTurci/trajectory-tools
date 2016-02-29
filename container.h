@@ -1,16 +1,21 @@
 #ifndef __CONTAINER_H
 #define __CONTAINER_H
 
-#include <vector>
+#include <array>
 
 
 class Container
 {
 public:
-    Container();
-    Container(const Container& copy);
+    const static int d = 3;
 
-    inline std::vector<double> get_size() const
+    Container() = default;
+    Container(const Container&) = default;
+    Container(Container&&) = default;
+    Container& operator=(const Container&) = default;
+    Container& operator=(Container&&) = default;
+
+    inline std::array<double,d> get_size() const
     {
         return this->boundaries;
     }
@@ -24,15 +29,29 @@ public:
         }
         return V;
     }
+    inline std::array<double,d> get_origin() const
+    {
+        return this->origin;
+    }
+    inline void set_origin(std::array<double,d> new_origin)
+    {
+        for (int c = 0; c < d; ++c) this->origin[c] = new_origin[c] - this->origin[c];
+    }
+    inline void set_origin(double* new_origin)
+    {
+        for (int c = 0; c < d; ++c) this->origin[c] = new_origin[c] - this->origin[c];
+    }
 
-protected:
     inline double apply_boundaries(double value, unsigned int dimension) const
     {
         if (value > this->boundaries[dimension]*0.5) return value-this->boundaries[dimension];
         else if (value < -this->boundaries[dimension]*0.5) return value+this->boundaries[dimension];
         else return value;
     }
-    std::vector<double> boundaries;
+
+protected:
+    std::array<double,d> origin;
+    std::array<double,d> boundaries;
 };
 
 #endif

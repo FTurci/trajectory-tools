@@ -2,8 +2,9 @@
 DEBUG   =
 #DEBUG	= -pg
 #DEBUG	= -g
-CFLAGS	= -Ofast -std=c++11 -Wall -Wextra $(DEBUG)
-LFLAGS	= $(DEBUG)
+BFLAGS  = -fopenmp
+CFLAGS	= -Ofast -std=c++11 -Wall -Wextra $(BFLAGS) $(DEBUG)
+LFLAGS	= $(BFLAGS) $(DEBUG)
 
 # Build tools.
 CC	= g++

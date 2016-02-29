@@ -6,14 +6,23 @@
 #include <exception>
 #include <type_traits>
 
-template <typename T >
-T StringToNum ( std::string &Text )
+
+// Shorthands for mathematical operations:
+
+template <typename T>
+inline T square(T t)
 {
-    std::stringstream ss(Text);
-    T result;
-    return ss >> result ? result : 0;
+    return t*t;
 }
 
+template <typename T>
+inline T cube(T t)
+{
+    return t*t*t;
+}
+
+
+// String conversion utilities:
 
 /*** Variadic means of creating strings. ***/
 inline std::string stringify(std::string arg)
